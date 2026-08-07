@@ -27,10 +27,31 @@
   --color-sand-200: #ede4d0;
   --color-sand-300: #ded0b3;
 
+  --color-white: #ffffff;
+  /* Constant light text used on top of colored/dark surfaces — stays light in dark mode. */
+  --color-cream: #fbf9f3;
+
   --color-ink-900: #232019;
 
   --shadow-card: 0 1px 2px rgba(35, 32, 25, 0.06), 0 8px 24px rgba(35, 32, 25, 0.08);
   --shadow-nav: 0 -4px 16px rgba(35, 32, 25, 0.06);
+}
+
+/* Dark mode is toggled via data-theme on <html>. Because Tailwind v4 utilities
+   reference the --color-* variables, redefining them here flips the whole app. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root[data-theme="dark"] {
+  --color-sand-50: #141310; /* page / sheet background */
+  --color-sand-100: #f7f2e7; /* kept light: only used as light text on green */
+  --color-white: #201e19; /* card surface */
+  --color-moss-50: #20261c; /* subtle dark press feedback */
+  --color-ink-900: #ecebe6; /* primary text */
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-nav: 0 -4px 16px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
 }
 
 @layer base {
@@ -62,5 +83,16 @@
 
   * {
     scrollbar-width: none;
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

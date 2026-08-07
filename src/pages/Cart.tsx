@@ -23,7 +23,7 @@ export default function Cart() {
           <button
             type="button"
             onClick={() => navigate('/shop')}
-            className="mt-2 rounded-full bg-moss-700 px-5 py-2.5 text-sm font-medium text-sand-50"
+            className="mt-2 rounded-full bg-moss-700 px-5 py-2.5 text-sm font-medium text-cream"
           >
             쇼핑하러 가기
           </button>
@@ -93,7 +93,7 @@ export default function Cart() {
         })}
       </div>
 
-      <div className="mx-5 mt-5 flex items-center gap-2 rounded-2xl bg-moss-700 px-4 py-3 text-sand-50">
+      <div className="mx-5 mt-5 flex items-center gap-2 rounded-2xl bg-moss-700 px-4 py-3 text-cream">
         <Leaf size={16} />
         <p className="text-xs">이 주문으로 탄소 {totalCo2.toFixed(1)}kg을 절감해요</p>
       </div>
@@ -116,7 +116,7 @@ export default function Cart() {
       <div className="px-5 pt-5">
         <button
           type="button"
-          className="w-full rounded-full bg-clay-500 py-3.5 text-sm font-semibold text-sand-50 active:bg-clay-600"
+          className="w-full rounded-full bg-clay-500 py-3.5 text-sm font-semibold text-cream active:bg-clay-600"
         >
           결제하기
         </button>
