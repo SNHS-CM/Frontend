@@ -21,7 +21,7 @@ export default function BottomNav() {
           to={to}
           className={({ isActive }) =>
             `relative flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-medium ${
-              isActive ? 'text-moss-700' : 'text-moss-300'
+              isActive ? 'text-moss-700 dark:text-moss-200' : 'text-moss-300 dark:text-moss-500'
             }`
           }
         >
@@ -30,7 +30,7 @@ export default function BottomNav() {
               <span className="relative">
                 <Icon size={20} strokeWidth={isActive ? 2.3 : 1.8} />
                 {to === '/cart' && totalItems > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-clay-500 text-[9px] text-sand-50">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-clay-500 text-[9px] text-cream">
                     {totalItems}
                   </span>
                 )}

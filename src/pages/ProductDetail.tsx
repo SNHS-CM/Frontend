@@ -92,7 +92,7 @@ export default function ProductDetail() {
                 onClick={() => setSize(s)}
                 className={`h-10 w-11 rounded-xl text-sm font-medium transition-colors ${
                   size === s
-                    ? 'bg-moss-700 text-sand-50'
+                    ? 'bg-moss-700 text-cream'
                     : 'bg-moss-100 text-moss-700'
                 }`}
               >
@@ -119,7 +119,7 @@ export default function ProductDetail() {
         <button
           type="button"
           onClick={handleAdd}
-          className="flex-1 rounded-full bg-clay-500 py-3 text-sm font-semibold text-sand-50 transition-colors active:bg-clay-600"
+          className="flex-1 rounded-full bg-clay-500 py-3 text-sm font-semibold text-cream transition-colors active:bg-clay-600"
         >
           {justAdded ? '장바구니에 담았어요 ✓' : '장바구니 담기'}
         </button>

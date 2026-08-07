@@ -5,21 +5,13 @@ import './index.css'
 import App from './App.tsx'
 import { ListingsProvider } from './context/ListingsContext.tsx'
 import { CartProvider } from './context/CartContext.tsx'
-import { WishlistProvider } from './context/WishlistContext.tsx'
-import { ChatProvider } from './context/ChatContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <ListingsProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <ChatProvider>
-              <App />
-            </ChatProvider>
-          </WishlistProvider>
-        </CartProvider>
-      </ListingsProvider>
+      <CartProvider>
+        <App />
+      </CartProvider>
     </BrowserRouter>
   </StrictMode>,
 )
