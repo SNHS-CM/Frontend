@@ -1,10 +1,11 @@
 import { Heart } from 'lucide-react'
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useWishlist } from '../context/WishlistContext'
 import { formatKRW, productImage, type Product } from '../data/products'
 
 export default function ProductCard({ product }: { product: Product }) {
-  const [saved, setSaved] = useState(false)
+  const { isLiked, toggleLike } = useWishlist()
+  const saved = isLiked('product', product.id)
 
   return (
     <Link to={`/product/${product.id}`} className="group block">
@@ -24,7 +25,7 @@ export default function ProductCard({ product }: { product: Product }) {
           type="button"
           onClick={(e) => {
             e.preventDefault()
-            setSaved((s) => !s)
+            toggleLike('product', product.id)
           }}
           aria-label="위시리스트에 담기"
           className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-sand-50/90 backdrop-blur"

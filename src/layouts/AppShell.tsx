@@ -3,7 +3,13 @@ import BottomNav from '../components/BottomNav'
 
 export default function AppShell() {
   const { pathname } = useLocation()
-  const hideNav = pathname === '/' || pathname === '/onboarding' || pathname.startsWith('/product/')
+  const hideNav =
+    pathname === '/' ||
+    pathname === '/onboarding' ||
+    pathname.startsWith('/product/') ||
+    pathname.startsWith('/market/') ||
+    pathname === '/wishlist' ||
+    pathname.startsWith('/chat')
 
   return (
     <div className="min-h-[100dvh] bg-moss-900 sm:flex sm:items-center sm:justify-center sm:p-8">

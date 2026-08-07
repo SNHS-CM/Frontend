@@ -1,14 +1,59 @@
 import { Leaf, Minus, Plus, ShoppingBag, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
-import { useCart } from '../context/CartContext'
+import { useCart, type CartKind } from '../context/CartContext'
 import { formatKRW, productImage, products } from '../data/products'
+import { resolveListingImage } from '../data/listings'
+import { useListings } from '../context/ListingsContext'
+
+interface ResolvedLine {
+  kind: CartKind
+  id: string
+  qty: number
+  href: string
+  image: string
+  brand?: string
+  name: string
+  unitPrice: number
+}
 
 export default function Cart() {
   const navigate = useNavigate()
   const { lines, setQty, removeFromCart, totalItems, totalPrice, totalCo2 } = useCart()
+  const { listings } = useListings()
 
-  if (lines.length === 0) {
+  const resolved: ResolvedLine[] = lines
+    .map((line): ResolvedLine | null => {
+      if (line.kind === 'product') {
+        const product = products.find((p) => p.id === line.id)
+        if (!product) return null
+        return {
+          kind: 'product',
+          id: product.id,
+          qty: line.qty,
+          href: `/product/${product.id}`,
+          image: productImage(product.seed, 200, 200),
+          brand: product.brand,
+          name: product.name,
+          unitPrice: product.price,
+        }
+      }
+      const listing = listings.find((l) => l.id === line.id)
+      if (!listing) return null
+      return {
+        kind: 'listing',
+        id: listing.id,
+        qty: line.qty,
+        href: `/market/${listing.id}`,
+        image: resolveListingImage(listing, 200, 200),
+        brand: listing.brand,
+        name: listing.name,
+        unitPrice: listing.discountedPrice ?? listing.price ?? 0,
+      }
+    })
+    .filter((l): l is ResolvedLine => l !== null)
+
+  if (resolved.length === 0) {
     return (
       <div className="pb-24">
         <StatusBar />
@@ -40,57 +85,62 @@ export default function Cart() {
       </header>
 
       <div className="space-y-3 px-5">
-        {lines.map((line) => {
-          const product = products.find((p) => p.id === line.productId)
-          if (!product) return null
-          return (
-            <div key={line.productId} className="flex gap-3 rounded-2xl bg-moss-50 p-3">
+        {resolved.map((line) => (
+          <div key={`${line.kind}:${line.id}`} className="flex gap-3 rounded-2xl bg-moss-50 p-3">
+            <Link to={line.href} className="shrink-0">
               <img
-                src={productImage(product.seed, 200, 200)}
-                alt={product.name}
-                className="h-20 w-20 shrink-0 rounded-xl object-cover"
+                src={line.image}
+                alt={line.name}
+                className="h-20 w-20 rounded-xl object-cover"
               />
-              <div className="flex flex-1 flex-col justify-between">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] text-moss-500">{product.brand}</p>
-                    <p className="text-sm font-medium text-ink-900">{product.name}</p>
+            </Link>
+            <div className="flex flex-1 flex-col justify-between">
+              <div className="flex items-start justify-between gap-2">
+                <Link to={line.href} className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    {line.brand && <p className="text-[11px] text-moss-500">{line.brand}</p>}
+                    {line.kind === 'listing' && (
+                      <span className="rounded bg-moss-100 px-1 py-px text-[9px] font-medium text-moss-600">
+                        마켓
+                      </span>
+                    )}
                   </div>
+                  <p className="truncate text-sm font-medium text-ink-900">{line.name}</p>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => removeFromCart(line.kind, line.id)}
+                  aria-label="삭제"
+                  className="shrink-0 text-moss-400"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-moss-700">{formatKRW(line.unitPrice)}</p>
+                <div className="flex items-center gap-2 rounded-full bg-moss-100 px-1.5 py-1">
                   <button
                     type="button"
-                    onClick={() => removeFromCart(product.id)}
-                    aria-label="삭제"
-                    className="text-moss-400"
+                    onClick={() => setQty(line.kind, line.id, line.qty - 1)}
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-moss-700"
+                    aria-label="수량 감소"
                   >
-                    <X size={16} />
+                    <Minus size={12} />
                   </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-moss-700">{formatKRW(product.price)}</p>
-                  <div className="flex items-center gap-2 rounded-full bg-moss-100 px-1.5 py-1">
-                    <button
-                      type="button"
-                      onClick={() => setQty(product.id, line.qty - 1)}
-                      className="flex h-6 w-6 items-center justify-center rounded-full text-moss-700"
-                      aria-label="수량 감소"
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <span className="w-4 text-center text-xs font-medium text-ink-900">{line.qty}</span>
-                    <button
-                      type="button"
-                      onClick={() => setQty(product.id, line.qty + 1)}
-                      className="flex h-6 w-6 items-center justify-center rounded-full text-moss-700"
-                      aria-label="수량 증가"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
+                  <span className="w-4 text-center text-xs font-medium text-ink-900">{line.qty}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQty(line.kind, line.id, line.qty + 1)}
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-moss-700"
+                    aria-label="수량 증가"
+                  >
+                    <Plus size={12} />
+                  </button>
                 </div>
               </div>
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
 
       <div className="mx-5 mt-5 flex items-center gap-2 rounded-2xl bg-moss-700 px-4 py-3 text-sand-50">

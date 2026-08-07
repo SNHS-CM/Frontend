@@ -1,16 +1,22 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { products } from '../data/products'
+import { RESALE_CO2_ESTIMATE } from '../data/listings'
+import { useListings } from './ListingsContext'
+
+export type CartKind = 'product' | 'listing'
 
 interface CartLine {
-  productId: string
+  kind: CartKind
+  id: string
   qty: number
 }
 
 interface CartContextValue {
   lines: CartLine[]
-  addToCart: (productId: string) => void
-  removeFromCart: (productId: string) => void
-  setQty: (productId: string, qty: number) => void
+  addToCart: (kind: CartKind, id: string) => void
+  removeFromCart: (kind: CartKind, id: string) => void
+  setQty: (kind: CartKind, id: string, qty: number) => void
+  isInCart: (kind: CartKind, id: string) => boolean
   totalItems: number
   totalPrice: number
   totalCo2: number
@@ -18,51 +24,75 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null)
 
+function sameLine(a: CartLine, kind: CartKind, id: string) {
+  return a.kind === kind && a.id === id
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { listings } = useListings()
   const [lines, setLines] = useState<CartLine[]>([
-    { productId: 'p2', qty: 1 },
-    { productId: 'p6', qty: 2 },
+    { kind: 'product', id: 'p2', qty: 1 },
+    { kind: 'product', id: 'p6', qty: 2 },
   ])
 
-  const addToCart = (productId: string) => {
+  const addToCart = (kind: CartKind, id: string) => {
     setLines((prev) => {
-      const existing = prev.find((l) => l.productId === productId)
+      const existing = prev.find((l) => sameLine(l, kind, id))
       if (existing) {
-        return prev.map((l) => (l.productId === productId ? { ...l, qty: l.qty + 1 } : l))
+        return prev.map((l) => (sameLine(l, kind, id) ? { ...l, qty: l.qty + 1 } : l))
       }
-      return [...prev, { productId, qty: 1 }]
+      return [...prev, { kind, id, qty: 1 }]
     })
   }
 
-  const removeFromCart = (productId: string) => {
-    setLines((prev) => prev.filter((l) => l.productId !== productId))
+  const removeFromCart = (kind: CartKind, id: string) => {
+    setLines((prev) => prev.filter((l) => !sameLine(l, kind, id)))
   }
 
-  const setQty = (productId: string, qty: number) => {
+  const setQty = (kind: CartKind, id: string, qty: number) => {
     if (qty <= 0) {
-      removeFromCart(productId)
+      removeFromCart(kind, id)
       return
     }
-    setLines((prev) => prev.map((l) => (l.productId === productId ? { ...l, qty } : l)))
+    setLines((prev) => prev.map((l) => (sameLine(l, kind, id) ? { ...l, qty } : l)))
   }
+
+  const isInCart = (kind: CartKind, id: string) => lines.some((l) => sameLine(l, kind, id))
 
   const { totalItems, totalPrice, totalCo2 } = useMemo(() => {
     let items = 0
     let price = 0
     let co2 = 0
     for (const line of lines) {
-      const product = products.find((p) => p.id === line.productId)
-      if (!product) continue
-      items += line.qty
-      price += product.price * line.qty
-      co2 += product.co2 * line.qty
+      if (line.kind === 'product') {
+        const product = products.find((p) => p.id === line.id)
+        if (!product) continue
+        items += line.qty
+        price += product.price * line.qty
+        co2 += product.co2 * line.qty
+      } else {
+        const listing = listings.find((l) => l.id === line.id)
+        if (!listing) continue
+        items += line.qty
+        price += (listing.discountedPrice ?? listing.price ?? 0) * line.qty
+        co2 += RESALE_CO2_ESTIMATE * line.qty
+      }
     }
     return { totalItems: items, totalPrice: price, totalCo2: co2 }
-  }, [lines])
+  }, [lines, listings])
 
   return (
     <CartContext.Provider
-      value={{ lines, addToCart, removeFromCart, setQty, totalItems, totalPrice, totalCo2 }}
+      value={{
+        lines,
+        addToCart,
+        removeFromCart,
+        setQty,
+        isInCart,
+        totalItems,
+        totalPrice,
+        totalCo2,
+      }}
     >
       {children}
     </CartContext.Provider>

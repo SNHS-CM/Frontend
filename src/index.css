@@ -64,3 +64,20 @@
     scrollbar-width: none;
   }
 }
+
+@layer components {
+  .input {
+    width: 100%;
+    border-radius: 0.75rem;
+    background: var(--color-moss-100);
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-900);
+  }
+  .input::placeholder {
+    color: var(--color-moss-500);
+  }
+  .input:focus {
+    outline: none;
+  }
+}

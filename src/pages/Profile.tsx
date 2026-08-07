@@ -5,11 +5,13 @@ import {
   HelpCircle,
   LogOut,
   MapPin,
+  MessageCircle,
   Package,
   Recycle,
   Repeat,
   Heart,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
 
 const stats = [
@@ -19,12 +21,13 @@ const stats = [
 ]
 
 const menu = [
-  { label: '주문 내역', icon: Package },
-  { label: '배송지 관리', icon: MapPin },
-  { label: '위시리스트', icon: Heart },
-  { label: '리세일 등록', icon: Repeat },
-  { label: '알림 설정', icon: Bell },
-  { label: '고객센터', icon: HelpCircle },
+  { label: '주문 내역', icon: Package, to: null },
+  { label: '배송지 관리', icon: MapPin, to: null },
+  { label: '위시리스트', icon: Heart, to: '/wishlist' },
+  { label: '채팅', icon: MessageCircle, to: '/chat' },
+  { label: '리세일 등록', icon: Repeat, to: '/market' },
+  { label: '알림 설정', icon: Bell, to: null },
+  { label: '고객센터', icon: HelpCircle, to: null },
 ]
 
 export default function Profile() {
@@ -59,17 +62,25 @@ export default function Profile() {
       </div>
 
       <div className="mx-5 mt-5 divide-y divide-moss-100 overflow-hidden rounded-2xl bg-moss-50">
-        {menu.map(({ label, icon: Icon }) => (
-          <button
-            key={label}
-            type="button"
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
-          >
-            <Icon size={18} className="text-moss-600" />
-            <span className="flex-1 text-sm text-ink-900">{label}</span>
-            <ChevronRight size={16} className="text-moss-400" />
-          </button>
-        ))}
+        {menu.map(({ label, icon: Icon, to }) =>
+          to ? (
+            <Link key={label} to={to} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+              <Icon size={18} className="text-moss-600" />
+              <span className="flex-1 text-sm text-ink-900">{label}</span>
+              <ChevronRight size={16} className="text-moss-400" />
+            </Link>
+          ) : (
+            <button
+              key={label}
+              type="button"
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+            >
+              <Icon size={18} className="text-moss-600" />
+              <span className="flex-1 text-sm text-ink-900">{label}</span>
+              <ChevronRight size={16} className="text-moss-400" />
+            </button>
+          ),
+        )}
       </div>
 
       <button

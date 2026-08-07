@@ -2,6 +2,7 @@ import { ArrowLeft, Heart, Leaf, Recycle, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useWishlist } from '../context/WishlistContext'
 import { formatKRW, productImage, products } from '../data/products'
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL']
@@ -10,15 +11,17 @@ export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
+  const { isLiked, toggleLike } = useWishlist()
   const [size, setSize] = useState('M')
-  const [saved, setSaved] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
 
   const product = products.find((p) => p.id === id)
   if (!product) return <Navigate to="/shop" replace />
 
+  const saved = isLiked('product', product.id)
+
   const handleAdd = () => {
-    addToCart(product.id)
+    addToCart('product', product.id)
     setJustAdded(true)
     setTimeout(() => setJustAdded(false), 1500)
   }
@@ -41,7 +44,7 @@ export default function ProductDetail() {
         </button>
         <button
           type="button"
-          onClick={() => setSaved((s) => !s)}
+          onClick={() => toggleLike('product', product.id)}
           className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-sand-50/90"
           aria-label="위시리스트에 담기"
         >
