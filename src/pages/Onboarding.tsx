@@ -28,7 +28,7 @@ export default function Onboarding() {
   const slide = slides[step]
 
   return (
-    <div className="relative flex h-full flex-col text-sand-50">
+    <div className="relative flex h-full flex-col text-cream">
       <img
         src={`https://picsum.photos/seed/${slide.seed}/860/1600`}
         alt=""
@@ -75,7 +75,7 @@ export default function Onboarding() {
           <button
             type="button"
             onClick={() => (isLast ? navigate('/home') : setStep((s) => s + 1))}
-            className="w-full rounded-full bg-clay-500 py-3.5 text-sm font-semibold text-sand-50 active:bg-clay-600"
+            className="w-full rounded-full bg-clay-500 py-3.5 text-sm font-semibold text-cream active:bg-clay-600"
           >
             {isLast ? '시작하기' : '다음'}
           </button>

@@ -41,7 +41,7 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="mx-5 mt-4 flex items-center gap-3 rounded-2xl bg-moss-700 p-4 text-sand-50 shadow-card">
+      <div className="mx-5 mt-4 flex items-center gap-3 rounded-2xl bg-moss-700 p-4 text-cream shadow-card">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-moss-600">
           <Leaf size={20} />
         </div>
