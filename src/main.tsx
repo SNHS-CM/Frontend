@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { I18nProvider } from './i18n'
+import { AuthProvider } from './context/AuthContext.tsx'
 import { ProfileProvider } from './context/ProfileContext.tsx'
 import { ListingsProvider } from './context/ListingsContext.tsx'
 import { PostsProvider } from './context/PostsContext.tsx'
@@ -15,19 +16,21 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <I18nProvider>
-        <ProfileProvider>
-          <ListingsProvider>
-            <PostsProvider>
-              <CartProvider>
-                <WishlistProvider>
-                  <ChatProvider>
-                    <App />
-                  </ChatProvider>
-                </WishlistProvider>
-              </CartProvider>
-            </PostsProvider>
-          </ListingsProvider>
-        </ProfileProvider>
+        <AuthProvider>
+          <ProfileProvider>
+            <ListingsProvider>
+              <PostsProvider>
+                <CartProvider>
+                  <WishlistProvider>
+                    <ChatProvider>
+                      <App />
+                    </ChatProvider>
+                  </WishlistProvider>
+                </CartProvider>
+              </PostsProvider>
+            </ListingsProvider>
+          </ProfileProvider>
+        </AuthProvider>
       </I18nProvider>
     </BrowserRouter>
   </StrictMode>,

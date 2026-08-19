@@ -3,10 +3,12 @@ import {
   Bookmark,
   Check,
   ChevronRight,
+  CloudOff,
   Globe,
   HelpCircle,
   Info,
   Leaf,
+  LogOut,
   MessageCircle,
   Pencil,
   Shield,
@@ -16,6 +18,7 @@ import {
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
+import { useAuth } from '../context/AuthContext'
 import { useProfile } from '../context/ProfileContext'
 import { useI18n } from '../i18n'
 import AboutCodimoment from './profile/AboutCodimoment'
@@ -38,7 +41,8 @@ type Panel =
 
 export default function Profile() {
   const { t } = useI18n()
-  const { profile, updateProfile } = useProfile()
+  const { profile, updateProfile, uploadPhoto, syncError } = useProfile()
+  const { status, logout, refresh } = useAuth()
   const [panel, setPanel] = useState<Panel>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState(profile.name)
@@ -69,9 +73,9 @@ export default function Profile() {
   const pickAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => updateProfile({ photo: reader.result as string })
-    reader.readAsDataURL(file)
+    void uploadPhoto(file)
+    // Allow re-picking the same file.
+    e.target.value = ''
   }
 
   const startEditName = () => {
@@ -89,9 +93,28 @@ export default function Profile() {
     <div className="pb-24">
       <StatusBar />
 
-      <header className="px-5 pb-3 pt-2">
-        <h1 className="font-display text-2xl font-medium text-ink-900">{t('profile.title')}</h1>
+      <header className="flex items-center gap-2 px-5 pb-3 pt-2">
+        <h1 className="flex-1 font-display text-2xl font-medium text-ink-900">
+          {t('profile.title')}
+        </h1>
+        {status === 'offline' && (
+          <button
+            type="button"
+            onClick={refresh}
+            title={t('auth.offline.note')}
+            className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
+          >
+            <CloudOff size={13} />
+            {t('auth.offline.badge')}
+          </button>
+        )}
       </header>
+
+      {syncError && (
+        <p role="alert" className="mx-5 mb-3 rounded-xl bg-clay-100 px-3 py-2 text-xs text-clay-600">
+          {t('auth.syncError', { message: syncError })}
+        </p>
+      )}
 
       {/* Banner + identity (edit right here on the profile) */}
       <div className="px-5">
@@ -246,6 +269,17 @@ export default function Profile() {
         </span>
         <ChevronRight size={18} className="text-sand-100/80" />
       </button>
+
+      {status === 'authenticated' && (
+        <button
+          type="button"
+          onClick={logout}
+          className="mx-5 mt-4 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl bg-moss-50 px-4 py-3.5 text-left"
+        >
+          <LogOut size={18} className="text-clay-500" />
+          <span className="flex-1 text-sm text-clay-500">{t('auth.logout')}</span>
+        </button>
+      )}
 
       {/* Sub-screens */}
       {panel === 'survey' && <StyleSurvey onClose={() => setPanel(null)} />}

@@ -7,30 +7,41 @@ import { useI18n } from '../../i18n'
 
 export default function BannerEditor({ onClose }: { onClose: () => void }) {
   const { t } = useI18n()
-  const { profile, updateProfile } = useProfile()
+  const { profile, saveBanner, uploadBannerImage } = useProfile()
   const [color, setColor] = useState(profile.bannerColor)
   const [image, setImage] = useState(profile.bannerImage)
+  // A freshly picked file is uploaded on save; `image` only previews it.
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const pickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const picked = e.target.files?.[0]
+    if (!picked) return
+    setFile(picked)
     const reader = new FileReader()
     reader.onload = () => setImage(String(reader.result))
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(picked)
     e.target.value = ''
   }
 
-  const save = () => {
-    updateProfile({ bannerColor: color, bannerImage: image })
-    onClose()
+  const save = async () => {
+    setBusy(true)
+    try {
+      if (file) await uploadBannerImage(file)
+      else await saveBanner({ bannerColor: color, bannerImage: image })
+      onClose()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const footer = (
     <button
       type="button"
       onClick={save}
-      className="w-full rounded-full bg-moss-700 py-3.5 text-sm font-semibold text-cream active:bg-moss-800"
+      disabled={busy}
+      className="w-full rounded-full bg-moss-700 py-3.5 text-sm font-semibold text-cream active:bg-moss-800 disabled:opacity-50"
     >
       {t('common.save')}
     </button>
@@ -61,7 +72,9 @@ export default function BannerEditor({ onClose }: { onClose: () => void }) {
             value={color}
             onChange={(hex) => {
               setColor(hex)
-              setImage('') // choosing a color clears the photo
+              // choosing a color clears the photo
+              setImage('')
+              setFile(null)
             }}
           />
         </div>
