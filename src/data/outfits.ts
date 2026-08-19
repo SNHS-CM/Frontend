@@ -56,9 +56,16 @@ export const defaultOutfit = {
   bottomId: 'b1',
 }
 
+/** 고른 옷들의 매치 점수 평균. 신발까지 고르면 셋을 평균합니다.
+ *  백엔드 `app/services/matching.py` 의 outfit_match() 와 같은 규칙입니다. */
+export function matchOfScores(scores: number[]) {
+  if (scores.length === 0) return 0
+  return Math.round(scores.reduce((sum, n) => sum + n, 0) / scores.length)
+}
+
 /** 선택된 상·하의로 전체 색 매칭 점수를 계산 */
 export function outfitMatch(top: Garment, bottom: Garment) {
-  return Math.round((top.match + bottom.match) / 2)
+  return matchOfScores([top.match, bottom.match])
 }
 
 /**

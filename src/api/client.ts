@@ -137,7 +137,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, { method, headers, body: payload, signal })
-  } catch {
+  } catch (error) {
+    // 호출 쪽이 취소한 요청은 서버 장애가 아니다. 그대로 던져 구분할 수 있게 한다.
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
     throw new ApiError(0, '서버에 연결할 수 없습니다.')
   }
 
