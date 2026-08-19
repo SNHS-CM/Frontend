@@ -1,14 +1,12 @@
 import { ArrowLeft, MessageCircle } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useChat } from '../context/ChatContext'
-import { useListings } from '../context/ListingsContext'
-import { resolveListingImage } from '../data/listings'
-import { productImage } from '../data/products'
+import { useSubjectImage } from '../hooks/useSubjectImage'
 
 export default function ChatList() {
   const navigate = useNavigate()
   const { conversations } = useChat()
-  const { getListing } = useListings()
+  const subjectImage = useSubjectImage()
 
   return (
     <div className="pb-10">
@@ -35,26 +33,28 @@ export default function ChatList() {
         <div className="divide-y divide-moss-100 px-5">
           {conversations.map((c) => {
             const lastMessage = c.messages[c.messages.length - 1]
-            const listing = getListing(c.listingId)
             return (
-              <Link
-                key={c.id}
-                to={`/chat/${c.id}`}
-                className="flex items-center gap-3 py-3.5"
-              >
+              <Link key={c.id} to={`/chat/${c.id}`} className="flex items-center gap-3 py-3.5">
                 <img
-                  src={listing ? resolveListingImage(listing, 120, 120) : productImage(c.listingSeed, 120, 120)}
-                  alt={c.listingName}
+                  src={subjectImage(c)}
+                  alt={c.subjectTitle}
                   className="h-14 w-14 shrink-0 rounded-xl object-cover"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-sm font-medium text-ink-900">{c.sellerName}</p>
+                    <p className="truncate text-sm font-medium text-ink-900">{c.partnerName}</p>
                     {lastMessage && (
                       <span className="shrink-0 text-[11px] text-moss-400">{lastMessage.time}</span>
                     )}
                   </div>
-                  <p className="truncate text-xs text-moss-500">{c.listingName}</p>
+                  <div className="flex items-center gap-1.5">
+                    {c.subjectKind === 'post' && (
+                      <span className="shrink-0 rounded bg-moss-100 px-1 py-px text-[9px] font-medium text-moss-600">
+                        코디
+                      </span>
+                    )}
+                    <p className="truncate text-xs text-moss-500">{c.subjectTitle}</p>
+                  </div>
                   {lastMessage && (
                     <p className="truncate text-xs text-moss-400">
                       {lastMessage.from === 'me' ? '나: ' : ''}

@@ -67,7 +67,7 @@ export default function Cart() {
           <p className="text-sm text-moss-500">장바구니가 비어있어요</p>
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => navigate('/home')}
             className="mt-2 rounded-full bg-moss-700 px-5 py-2.5 text-sm font-medium text-cream"
           >
             쇼핑하러 가기

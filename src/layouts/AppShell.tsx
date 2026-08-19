@@ -8,6 +8,8 @@ export default function AppShell() {
     pathname === '/onboarding' ||
     pathname.startsWith('/product/') ||
     pathname.startsWith('/market/') ||
+    pathname.startsWith('/discover/') ||
+    pathname === '/saved' ||
     pathname === '/wishlist' ||
     pathname.startsWith('/chat')
 

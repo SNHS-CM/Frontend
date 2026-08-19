@@ -1,15 +1,20 @@
 import {
   Bell,
+  Bookmark,
+  Check,
   ChevronRight,
-  Gift,
+  Globe,
   HelpCircle,
-  LogOut,
-  MapPin,
-  Package,
-  Recycle,
-  Repeat,
-  Heart,
+  Info,
+  Leaf,
+  MessageCircle,
+  Pencil,
+  Shield,
+  Shirt,
+  Sparkles,
 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
 import { useProfile } from '../context/ProfileContext'
 import { useI18n } from '../i18n'
@@ -32,7 +37,7 @@ type Panel =
   | null
 
 export default function Profile() {
-  const { t, lang } = useI18n()
+  const { t } = useI18n()
   const { profile, updateProfile } = useProfile()
   const [panel, setPanel] = useState<Panel>(null)
   const [editingName, setEditingName] = useState(false)
@@ -45,16 +50,41 @@ export default function Profile() {
     { label: t('profile.co2Saved'), value: `${profile.co2SavedKg.toFixed(1)} kg`, icon: Leaf },
   ]
 
-const menu = [
-  { label: '주문 내역', icon: Package },
-  { label: '배송지 관리', icon: MapPin },
-  { label: '위시리스트', icon: Heart },
-  { label: '리세일 등록', icon: Repeat },
-  { label: '알림 설정', icon: Bell },
-  { label: '고객센터', icon: HelpCircle },
-]
+  // Rows that open an in-page panel.
+  const settingsMenu: { label: string; icon: typeof Bell; panel: Panel }[] = [
+    { label: t('menu.styleSurvey'), icon: Sparkles, panel: 'survey' },
+    { label: t('menu.language'), icon: Globe, panel: 'language' },
+    { label: t('menu.notifications'), icon: Bell, panel: 'notifications' },
+    { label: t('menu.privacy'), icon: Shield, panel: 'privacy' },
+    { label: t('menu.help'), icon: HelpCircle, panel: 'help' },
+    { label: t('menu.about'), icon: Info, panel: 'about' },
+  ]
 
-export default function Profile() {
+  // Rows that navigate to another route.
+  const linkMenu = [
+    { label: t('menu.saved'), icon: Bookmark, to: '/saved' },
+    { label: t('menu.chats'), icon: MessageCircle, to: '/chat' },
+  ]
+
+  const pickAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => updateProfile({ photo: reader.result as string })
+    reader.readAsDataURL(file)
+  }
+
+  const startEditName = () => {
+    setNameDraft(profile.name)
+    setEditingName(true)
+  }
+
+  const commitName = () => {
+    const next = nameDraft.trim()
+    if (next) updateProfile({ name: next })
+    setEditingName(false)
+  }
+
   return (
     <div className="pb-24">
       <StatusBar />
@@ -174,11 +204,25 @@ export default function Profile() {
         ))}
       </div>
 
+      {/* Shortcuts to other screens */}
       <div className="mx-5 mt-5 divide-y divide-moss-100 overflow-hidden rounded-2xl bg-moss-50">
-        {menu.map(({ label, icon: Icon }) => (
+        {linkMenu.map(({ label, icon: Icon, to }) => (
+          <Link key={to} to={to} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+            <Icon size={18} className="text-moss-600" />
+            <span className="flex-1 text-sm text-ink-900">{label}</span>
+            <ChevronRight size={16} className="text-moss-400" />
+          </Link>
+        ))}
+      </div>
+
+      {/* Settings panels */}
+      <p className="mx-5 mt-5 mb-2 text-xs font-medium text-moss-500">{t('profile.settings')}</p>
+      <div className="mx-5 divide-y divide-moss-100 overflow-hidden rounded-2xl bg-moss-50">
+        {settingsMenu.map(({ label, icon: Icon, panel: target }) => (
           <button
             key={label}
             type="button"
+            onClick={() => setPanel(target)}
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
           >
             <Icon size={18} className="text-moss-600" />
