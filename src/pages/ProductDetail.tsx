@@ -16,7 +16,7 @@ export default function ProductDetail() {
   const [justAdded, setJustAdded] = useState(false)
 
   const product = products.find((p) => p.id === id)
-  if (!product) return <Navigate to="/shop" replace />
+  if (!product) return <Navigate to="/home" replace />
 
   const saved = isLiked('product', product.id)
 
