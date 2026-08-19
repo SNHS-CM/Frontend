@@ -65,6 +65,7 @@ function App() {
           <Route path="/market/new" element={<ListingForm />} />
           <Route path="/market/:id/edit" element={<ListingForm />} />
           <Route path="/market/:id" element={<ListingDetail />} />
+          <Route path="/outfit" element={<OutfitBuilder />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/discover/:id" element={<PostDetail />} />
           <Route path="/outfit" element={<OutfitBuilder />} />

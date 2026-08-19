@@ -1,14 +1,8 @@
-import { Bookmark, Sparkles } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Bookmark, CloudOff, Leaf, Sparkles } from 'lucide-react'
 import StatusBar from '../components/StatusBar'
-import {
-  bottoms,
-  defaultOutfit,
-  outfitKey,
-  outfitMatch,
-  tops,
-  type Garment,
-} from '../data/outfits'
+import { useAuth } from '../context/AuthContext'
+import { useOutfitBuilder, type BuilderGarment } from '../hooks/useOutfitBuilder'
+import { useI18n } from '../i18n'
 
 /** 옷이 살짝 떠 있는 듯한 은은한 그림자 (blur 14 · y+6 · opacity 0.16) */
 const FLOAT_SHADOW = 'drop-shadow-[0_6px_14px_rgba(35,32,25,0.16)]'
@@ -22,7 +16,7 @@ function GarmentVisual({
   imgClass = '',
   emojiClass = '',
 }: {
-  garment: Garment
+  garment: BuilderGarment
   imgClass?: string
   emojiClass?: string
 }) {
@@ -48,7 +42,7 @@ function SuggestionCard({
   selected,
   onSelect,
 }: {
-  garment: Garment
+  garment: BuilderGarment
   selected: boolean
   onSelect: () => void
 }) {
@@ -66,118 +60,193 @@ function SuggestionCard({
       </div>
       <span className="flex items-center gap-1 text-xs font-medium text-moss-600">
         <Sparkles size={13} />
-        {garment.match}%
+        {garment.matchScore}%
       </span>
     </button>
   )
 }
 
+function Rack({
+  title,
+  garments,
+  selectedId,
+  onSelect,
+  hint,
+}: {
+  title: string
+  garments: BuilderGarment[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  hint?: string
+}) {
+  if (garments.length === 0) return null
+  return (
+    <section className="mt-5 px-5">
+      <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold text-ink-900">
+        {title}
+        {hint && <span className="text-xs font-normal text-moss-500">{hint}</span>}
+      </h2>
+      <div className="grid grid-cols-3 gap-3">
+        {garments.map((g) => (
+          <SuggestionCard
+            key={g.id}
+            garment={g}
+            selected={g.id === selectedId}
+            onSelect={() => onSelect(g.id)}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function OutfitBuilder() {
-  const [topId, setTopId] = useState(defaultOutfit.topId)
-  const [bottomId, setBottomId] = useState(defaultOutfit.bottomId)
-  // 북마크는 단일 bool이 아니라 "코디 조합 키"들의 집합으로 관리합니다.
-  const [favorites, setFavorites] = useState<Set<string>>(() => new Set())
+  const { t } = useI18n()
+  const { status, refresh } = useAuth()
+  const {
+    loading,
+    saving,
+    error,
+    dismissError,
+    tops,
+    bottoms,
+    shoes,
+    top,
+    bottom,
+    shoe,
+    selectTop,
+    selectBottom,
+    selectShoes,
+    preview,
+    matchScore,
+    isBookmarked,
+    save,
+    toggleBookmark,
+  } = useOutfitBuilder()
 
-  const top = useMemo(() => tops.find((t) => t.id === topId) ?? tops[0], [topId])
-  const bottom = useMemo(() => bottoms.find((b) => b.id === bottomId) ?? bottoms[0], [bottomId])
-  const match = outfitMatch(top, bottom)
-
-  // 현재 선택된 조합의 키 — 이 키가 favorites에 있는지로 북마크 여부를 판단합니다.
-  const currentKey = outfitKey(top.id, bottom.id)
-  const isSaved = favorites.has(currentKey)
-
-  const toggleFavorite = () => {
-    setFavorites((prev) => {
-      const next = new Set(prev)
-      if (next.has(currentKey)) next.delete(currentKey)
-      else next.add(currentKey)
-      return next
-    })
+  if (loading) {
+    return (
+      <div className="pb-28">
+        <StatusBar />
+        <p className="px-5 pt-10 text-sm text-moss-500">{t('outfit.loading')}</p>
+      </div>
+    )
   }
 
-  const saveOutfit = () => {
-    setFavorites((prev) => new Set(prev).add(currentKey))
-  }
+  const chosen = [top, bottom, shoe].filter((g): g is BuilderGarment => g !== null)
 
   return (
     <div className="pb-28">
       <StatusBar />
 
       <header className="px-5 pb-4 pt-2">
-        <h1 className="font-display text-2xl font-medium text-ink-900">Outfit Builder</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="flex-1 font-display text-2xl font-medium text-ink-900">
+            {t('outfit.title')}
+          </h1>
+          {status === 'offline' && (
+            <button
+              type="button"
+              onClick={refresh}
+              title={t('auth.offline.note')}
+              className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
+            >
+              <CloudOff size={13} />
+              {t('auth.offline.badge')}
+            </button>
+          )}
+        </div>
         <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-moss-600">
           <Sparkles size={16} />
-          {match}% Color Match
+          {t('outfit.colorMatch', { n: matchScore })}
         </p>
       </header>
 
-      {/* 코디 미리보기 */}
-      <div className="mx-5 rounded-3xl bg-white p-5 shadow-card">
-        <div className="flex items-center justify-center py-4">
-          <GarmentVisual garment={top} imgClass="max-h-44 w-auto" emojiClass="text-[5.5rem]" />
-        </div>
-        <div className="flex items-center justify-center py-4">
-          <GarmentVisual garment={bottom} imgClass="max-h-44 w-auto" emojiClass="text-[5.5rem]" />
-        </div>
+      {error && (
+        <button
+          type="button"
+          onClick={dismissError}
+          className="mx-5 mb-3 block w-[calc(100%-2.5rem)] rounded-xl bg-clay-100 px-3 py-2 text-left text-xs text-clay-600"
+        >
+          {error}
+        </button>
+      )}
 
-        <div className="mt-3 border-t border-moss-100 pt-4">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-xs text-moss-500">Current Outfit</p>
-              <p className="mt-0.5 text-base font-medium text-ink-900">
-                {top.name} + {bottom.name}
-              </p>
+      {chosen.length === 0 ? (
+        <p className="mx-5 rounded-2xl bg-white px-4 py-6 text-center text-sm text-moss-500 shadow-card">
+          {t('outfit.empty')}
+        </p>
+      ) : (
+        /* 코디 미리보기 */
+        <div className="mx-5 rounded-3xl bg-white p-5 shadow-card">
+          {chosen.map((g) => (
+            <div key={g.id} className="flex items-center justify-center py-4">
+              <GarmentVisual garment={g} imgClass="max-h-44 w-auto" emojiClass="text-[5.5rem]" />
             </div>
-            <button
-              type="button"
-              onClick={toggleFavorite}
-              aria-label="코디 북마크"
-              aria-pressed={isSaved}
-              className="text-moss-600 transition-transform duration-200 ease-out active:scale-90"
-            >
-              <Bookmark size={22} className={isSaved ? 'fill-moss-600' : ''} />
-            </button>
+          ))}
+
+          <div className="mt-3 border-t border-moss-100 pt-4">
+            <div className="flex items-end justify-between">
+              <div className="min-w-0">
+                <p className="text-xs text-moss-500">{t('outfit.current')}</p>
+                <p className="mt-0.5 truncate text-base font-medium text-ink-900">
+                  {chosen.map((g) => g.name).join(' + ')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleBookmark}
+                disabled={saving || !top || !bottom}
+                aria-label={t('outfit.bookmark')}
+                aria-pressed={isBookmarked}
+                className="text-moss-600 transition-transform duration-200 ease-out active:scale-90 disabled:opacity-40"
+              >
+                <Bookmark size={22} className={isBookmarked ? 'fill-moss-600' : ''} />
+              </button>
+            </div>
+
+            {/* 서버가 계산한 절감 CO₂ / 에코 포인트 */}
+            {preview?.ecoPoints != null && preview.co2SavedKg != null && (
+              <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-moss-50 px-3 py-2 text-xs text-moss-600">
+                <Leaf size={14} />
+                {t('outfit.reward', {
+                  kg: preview.co2SavedKg.toFixed(1),
+                  n: preview.ecoPoints,
+                })}
+              </p>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 추천 상의 */}
-      <section className="mt-6 px-5">
-        <h2 className="mb-3 text-base font-semibold text-ink-900">Suggested Tops</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {tops.map((g) => (
-            <SuggestionCard
-              key={g.id}
-              garment={g}
-              selected={g.id === topId}
-              onSelect={() => setTopId(g.id)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* 추천 하의 */}
-      <section className="mt-5 px-5">
-        <h2 className="mb-3 text-base font-semibold text-ink-900">Suggested Bottoms</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {bottoms.map((g) => (
-            <SuggestionCard
-              key={g.id}
-              garment={g}
-              selected={g.id === bottomId}
-              onSelect={() => setBottomId(g.id)}
-            />
-          ))}
-        </div>
-      </section>
+      <Rack
+        title={t('outfit.tops')}
+        garments={tops}
+        selectedId={top?.id ?? null}
+        onSelect={selectTop}
+      />
+      <Rack
+        title={t('outfit.bottoms')}
+        garments={bottoms}
+        selectedId={bottom?.id ?? null}
+        onSelect={selectBottom}
+      />
+      <Rack
+        title={t('outfit.shoes')}
+        garments={shoes}
+        selectedId={shoe?.id ?? null}
+        onSelect={selectShoes}
+        hint={t('common.optional')}
+      />
 
       <div className="mt-6 px-5">
         <button
           type="button"
-          onClick={saveOutfit}
-          className="w-full rounded-2xl bg-moss-500 py-4 text-center text-base font-medium text-cream shadow-card transition-transform duration-200 ease-out active:scale-[0.98]"
+          onClick={save}
+          disabled={saving || !top || !bottom}
+          className="w-full rounded-2xl bg-moss-500 py-4 text-center text-base font-medium text-cream shadow-card transition-transform duration-200 ease-out active:scale-[0.98] disabled:opacity-50"
         >
-          {isSaved ? 'Saved ✓' : 'Save Outfit'}
+          {saving ? t('outfit.saving') : isBookmarked ? t('outfit.saved') : t('outfit.save')}
         </button>
       </div>
     </div>
