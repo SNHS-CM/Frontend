@@ -15,7 +15,10 @@ export function useSubjectImage() {
       const listing = getListing(c.subjectId)
       return listing ? resolveListingImage(listing, w, h) : productImage(c.subjectSeed, w, h)
     }
-    const post = getPost(c.subjectId)
-    return post ? resolvePostImage(post, w, h) : productImage(c.subjectSeed, w, h)
+    if (c.subjectKind === 'post') {
+      const post = getPost(c.subjectId)
+      return post ? resolvePostImage(post, w, h) : productImage(c.subjectSeed, w, h)
+    }
+    return productImage(c.subjectSeed, w, h)
   }
 }
