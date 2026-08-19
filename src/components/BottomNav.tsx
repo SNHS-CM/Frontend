@@ -6,6 +6,7 @@ const items = [
   { to: '/home', label: '홈', icon: Home },
   { to: '/discover', label: '디스커버', icon: Compass },
   { to: '/market', label: '마켓', icon: Store },
+  { to: '/outfit', label: '코디', icon: Shirt },
   { to: '/cart', label: '장바구니', icon: ShoppingCart },
   { to: '/profile', label: '마이', icon: User },
 ]
