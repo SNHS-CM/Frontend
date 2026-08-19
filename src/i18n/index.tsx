@@ -80,6 +80,21 @@ const en: Dict = {
   'auth.offline.retry': 'Retry',
   'auth.syncError': 'Could not save to the server: {message}',
 
+  // outfit builder
+  'outfit.title': 'Outfit Builder',
+  'outfit.loading': 'Loading your wardrobe…',
+  'outfit.colorMatch': '{n}% Color Match',
+  'outfit.current': 'Current Outfit',
+  'outfit.bookmark': 'Bookmark outfit',
+  'outfit.tops': 'Suggested Tops',
+  'outfit.bottoms': 'Suggested Bottoms',
+  'outfit.shoes': 'Shoes',
+  'outfit.save': 'Save Outfit',
+  'outfit.saved': 'Saved ✓',
+  'outfit.saving': 'Saving…',
+  'outfit.reward': 'Saves {kg} kg CO₂ · earns {n} EP',
+  'outfit.empty': 'Register a top and a bottom to start building outfits.',
+
   // profile
   'profile.title': 'Profile',
   'profile.settings': 'Settings',
@@ -282,6 +297,21 @@ const ko: Dict = {
   'auth.offline.note': '서버에 연결할 수 없어 변경사항이 이 기기에만 저장돼요.',
   'auth.offline.retry': '다시 연결',
   'auth.syncError': '서버에 저장하지 못했어요: {message}',
+
+  // outfit builder
+  'outfit.title': '코디 만들기',
+  'outfit.loading': '옷장을 불러오는 중…',
+  'outfit.colorMatch': '색 매칭 {n}%',
+  'outfit.current': '현재 코디',
+  'outfit.bookmark': '코디 북마크',
+  'outfit.tops': '추천 상의',
+  'outfit.bottoms': '추천 하의',
+  'outfit.shoes': '신발',
+  'outfit.save': '코디 저장',
+  'outfit.saved': '저장됨 ✓',
+  'outfit.saving': '저장 중…',
+  'outfit.reward': 'CO₂ {kg}kg 절감 · {n} EP 적립',
+  'outfit.empty': '상의와 하의를 등록하면 코디를 만들 수 있어요.',
 
   // profile
   'profile.title': '프로필',
