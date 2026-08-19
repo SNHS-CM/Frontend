@@ -8,6 +8,7 @@ import ListingDetail from './pages/ListingDetail'
 import ListingForm from './pages/ListingForm'
 import Discover from './pages/Discover'
 import PostDetail from './pages/PostDetail'
+import OutfitBuilder from './pages/OutfitBuilder'
 import ChatList from './pages/ChatList'
 import ChatRoom from './pages/ChatRoom'
 import Cart from './pages/Cart'
@@ -29,6 +30,7 @@ function App() {
         <Route path="/market/:id" element={<ListingDetail />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/discover/:id" element={<PostDetail />} />
+        <Route path="/outfit" element={<OutfitBuilder />} />
         <Route path="/chat" element={<ChatList />} />
         <Route path="/chat/:id" element={<ChatRoom />} />
         <Route path="/cart" element={<Cart />} />
