@@ -1,17 +1,10 @@
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react'
-import { ApiError, assetUrl, relativeUrl } from '../api/client'
-import * as profileApi from '../api/profile'
-import type { ApiProfile } from '../api/types'
-import { useAuth } from './AuthContext'
 
 export interface SurveyData {
   skinTone: string | null // i18n key id, e.g. 'skin.asian'
@@ -32,13 +25,12 @@ export interface NotifSettings {
 export type Theme = 'light' | 'dark'
 
 export interface ProfileState {
-  id: string
   name: string
   gender: string // i18n key id, e.g. 'gender.female'
   bio: string
-  photo: string // absolute URL, data URL, or '' (falls back to initial)
+  photo: string // data URL or '' (falls back to initial)
   bannerColor: string // hex color for the profile banner
-  bannerImage: string // absolute URL or '' (takes precedence over bannerColor)
+  bannerImage: string // data URL or '' (takes precedence over bannerColor)
   theme: Theme
   email: string
   emailVerified: boolean
@@ -58,7 +50,6 @@ export interface ProfileState {
 }
 
 const DEFAULT: ProfileState = {
-  id: '',
   name: 'Alex Chen',
   gender: 'gender.na',
   bio: '',
@@ -91,57 +82,18 @@ const DEFAULT: ProfileState = {
 
 interface ProfileContextValue {
   profile: ProfileState
-  /** True when changes are being persisted to the backend. */
-  online: boolean
-  /** Set when a write could not reach the server; the change stayed local. */
-  syncError: string | null
   updateProfile: (patch: Partial<ProfileState>) => void
   updateSurvey: (patch: Partial<SurveyData>) => void
   updateNotif: (patch: Partial<NotifSettings>) => void
   applyStyleKeywords: (keywords: string[]) => void
   setTheme: (theme: Theme) => void
   clearHistory: () => void
-  uploadPhoto: (file: File) => Promise<void>
-  removePhoto: () => Promise<void>
-  saveBanner: (banner: { bannerColor?: string; bannerImage?: string }) => Promise<void>
-  uploadBannerImage: (file: File) => Promise<void>
 }
 
 const ProfileContext = createContext<ProfileContextValue | null>(null)
 const STORAGE_KEY = 'codimoment.profile'
 
-/** Fields PATCH /api/profile/me accepts. Everything else has its own endpoint
- *  or is server-owned (stats, verification flags). */
-const PATCHABLE = ['name', 'gender', 'bio', 'phone', 'address', 'zip'] as const
-
-function fromApi(dto: ApiProfile): ProfileState {
-  return {
-    id: dto.id,
-    name: dto.name,
-    gender: dto.gender,
-    bio: dto.bio,
-    photo: assetUrl(dto.photo),
-    bannerColor: dto.bannerColor,
-    bannerImage: assetUrl(dto.bannerImage),
-    theme: dto.theme,
-    email: dto.email,
-    emailVerified: dto.emailVerified,
-    phone: dto.phone,
-    phoneVerified: dto.phoneVerified,
-    address: dto.address,
-    zip: dto.zip,
-    styleKeywords: dto.styleKeywords,
-    survey: dto.survey,
-    notif: dto.notif,
-    history: dto.history,
-    totalItems: dto.totalItems,
-    outfits: dto.outfits,
-    co2SavedKg: dto.co2SavedKg,
-    ecoPoints: dto.ecoPoints,
-  }
-}
-
-function loadLocal(): ProfileState {
+function load(): ProfileState {
   if (typeof localStorage === 'undefined') return DEFAULT
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -160,291 +112,52 @@ function loadLocal(): ProfileState {
 }
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const { status, initialProfile } = useAuth()
-  const online = status === 'authenticated'
+  const [profile, setProfile] = useState<ProfileState>(load)
 
-  const [profile, setProfile] = useState<ProfileState>(() =>
-    initialProfile ? fromApi(initialProfile) : loadLocal(),
-  )
-  const [syncError, setSyncError] = useState<string | null>(null)
-
-  // Keep the latest state readable from async callbacks without re-subscribing.
-  const profileRef = useRef(profile)
-  profileRef.current = profile
-
-  // Adopt the profile the session check fetched (login, signup, reconnect).
   useEffect(() => {
-    if (initialProfile) setProfile(fromApi(initialProfile))
-  }, [initialProfile])
-
-  // Signing out must not leave the previous account's profile on the device —
-  // the local-mode fallback would otherwise persist and re-show it.
-  const prevStatus = useRef(status)
-  useEffect(() => {
-    const was = prevStatus.current
-    prevStatus.current = status
-    if (was === 'authenticated' && status === 'guest') {
-      try {
-        localStorage.removeItem(STORAGE_KEY)
-      } catch {
-        // ignore storage errors
-      }
-      setProfile(DEFAULT)
-      setSyncError(null)
-    }
-  }, [status])
-
-  // Offline and guest sessions persist locally, exactly as before.
-  useEffect(() => {
-    if (online) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
     } catch {
       // ignore storage errors
     }
-  }, [profile, online])
+  }, [profile])
 
   // Apply the color theme to the document root so CSS variables flip app-wide.
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', profile.theme)
   }, [profile.theme])
 
-  /** Run a write against the server. The local state has already been updated
-   *  optimistically, so a failure only needs to surface a message — the user's
-   *  edit is never silently dropped. */
-  const sync = useCallback(
-    async (run: () => Promise<void>) => {
-      if (!online) return
-      try {
-        await run()
-        setSyncError(null)
-      } catch (error) {
-        const message =
-          error instanceof ApiError ? error.message : '변경사항을 저장하지 못했습니다.'
-        setSyncError(message)
-      }
-    },
-    [online],
+  const updateProfile = (patch: Partial<ProfileState>) =>
+    setProfile((p) => ({ ...p, ...patch }))
+
+  const updateSurvey = (patch: Partial<SurveyData>) =>
+    setProfile((p) => ({ ...p, survey: { ...p.survey, ...patch } }))
+
+  const updateNotif = (patch: Partial<NotifSettings>) =>
+    setProfile((p) => ({ ...p, notif: { ...p.notif, ...patch } }))
+
+  const applyStyleKeywords = (keywords: string[]) =>
+    setProfile((p) => ({ ...p, styleKeywords: keywords }))
+
+  const setTheme = (theme: Theme) => setProfile((p) => ({ ...p, theme }))
+
+  const clearHistory = () => setProfile((p) => ({ ...p, history: [] }))
+
+  return (
+    <ProfileContext.Provider
+      value={{
+        profile,
+        updateProfile,
+        updateSurvey,
+        updateNotif,
+        applyStyleKeywords,
+        setTheme,
+        clearHistory,
+      }}
+    >
+      {children}
+    </ProfileContext.Provider>
   )
-
-  // Text fields are edited keystroke by keystroke (the address and phone inputs
-  // in Privacy & Data call updateProfile on every change), so the PATCH is
-  // debounced and the pending fields coalesced into one request.
-  const pendingPatch = useRef<profileApi.ProfilePatch>({})
-  const patchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const flushPatch = useCallback(() => {
-    if (patchTimer.current) {
-      clearTimeout(patchTimer.current)
-      patchTimer.current = null
-    }
-    const body = pendingPatch.current
-    pendingPatch.current = {}
-    if (Object.keys(body).length === 0) return
-
-    void sync(async () => {
-      const updated = await profileApi.patchProfile(body)
-      // Adopt only what the server owns. The text the user typed is left alone,
-      // otherwise a reply that raced ahead of the next keystroke would undo it.
-      setProfile((p) => ({
-        ...p,
-        emailVerified: updated.emailVerified,
-        phoneVerified: updated.phoneVerified,
-        totalItems: updated.totalItems,
-        outfits: updated.outfits,
-        co2SavedKg: updated.co2SavedKg,
-        ecoPoints: updated.ecoPoints,
-      }))
-    })
-  }, [sync])
-
-  const updateProfile = useCallback(
-    (patch: Partial<ProfileState>) => {
-      setProfile((p) => ({ ...p, ...patch }))
-      if (!online) return
-
-      let queued = false
-      for (const key of PATCHABLE) {
-        const value = patch[key]
-        if (typeof value === 'string') {
-          pendingPatch.current[key] = value
-          queued = true
-        }
-      }
-      if (!queued) return
-
-      if (patchTimer.current) clearTimeout(patchTimer.current)
-      patchTimer.current = setTimeout(flushPatch, 600)
-    },
-    [online, flushPatch],
-  )
-
-  // Do not lose the last keystrokes when the screen goes away.
-  useEffect(() => () => flushPatch(), [flushPatch])
-
-  const updateSurvey = useCallback(
-    (patch: Partial<SurveyData>) => {
-      const next = { ...profileRef.current.survey, ...patch }
-      setProfile((p) => ({ ...p, survey: next }))
-
-      void sync(async () => {
-        const result = await profileApi.saveSurvey(next)
-        setProfile((p) => ({
-          ...p,
-          survey: result.survey,
-          styleKeywords: result.styleKeywords,
-        }))
-      })
-    },
-    [sync],
-  )
-
-  const updateNotif = useCallback(
-    (patch: Partial<NotifSettings>) => {
-      setProfile((p) => ({ ...p, notif: { ...p.notif, ...patch } }))
-      void sync(async () => {
-        const notif = await profileApi.patchNotif(patch)
-        setProfile((p) => ({ ...p, notif }))
-      })
-    },
-    [sync],
-  )
-
-  const applyStyleKeywords = useCallback(
-    (keywords: string[]) => {
-      setProfile((p) => ({ ...p, styleKeywords: keywords }))
-      void sync(async () => {
-        await profileApi.setStyleKeywords(keywords)
-      })
-    },
-    [sync],
-  )
-
-  const setTheme = useCallback(
-    (theme: Theme) => {
-      setProfile((p) => ({ ...p, theme }))
-      void sync(async () => {
-        await profileApi.setTheme(theme)
-      })
-    },
-    [sync],
-  )
-
-  const clearHistory = useCallback(() => {
-    setProfile((p) => ({ ...p, history: [] }))
-    void sync(async () => {
-      await profileApi.clearHistory()
-    })
-  }, [sync])
-
-  // --- media ---------------------------------------------------------------
-  // Uploads need the server. Offline we keep the existing data-URL behavior so
-  // the screen still previews the picked image.
-
-  const readAsDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = () => reject(reader.error)
-      reader.readAsDataURL(file)
-    })
-
-  const uploadPhoto = useCallback(
-    async (file: File) => {
-      if (!online) {
-        setProfile((p) => ({ ...p, photo: '' }))
-        const dataUrl = await readAsDataUrl(file)
-        setProfile((p) => ({ ...p, photo: dataUrl }))
-        return
-      }
-      await sync(async () => {
-        const { photo } = await profileApi.uploadPhoto(file)
-        setProfile((p) => ({ ...p, photo: assetUrl(photo) }))
-      })
-    },
-    [online, sync],
-  )
-
-  const removePhoto = useCallback(async () => {
-    setProfile((p) => ({ ...p, photo: '' }))
-    await sync(async () => {
-      await profileApi.removePhoto()
-    })
-  }, [sync])
-
-  const saveBanner = useCallback(
-    async (banner: { bannerColor?: string; bannerImage?: string }) => {
-      setProfile((p) => ({ ...p, ...banner }))
-      await sync(async () => {
-        const saved = await profileApi.saveBanner({
-          ...banner,
-          ...(banner.bannerImage !== undefined
-            ? { bannerImage: relativeUrl(banner.bannerImage) }
-            : {}),
-        })
-        setProfile((p) => ({
-          ...p,
-          bannerColor: saved.bannerColor,
-          bannerImage: assetUrl(saved.bannerImage),
-        }))
-      })
-    },
-    [sync],
-  )
-
-  const uploadBannerImage = useCallback(
-    async (file: File) => {
-      if (!online) {
-        const dataUrl = await readAsDataUrl(file)
-        setProfile((p) => ({ ...p, bannerImage: dataUrl }))
-        return
-      }
-      await sync(async () => {
-        const saved = await profileApi.uploadBannerImage(file)
-        setProfile((p) => ({
-          ...p,
-          bannerColor: saved.bannerColor,
-          bannerImage: assetUrl(saved.bannerImage),
-        }))
-      })
-    },
-    [online, sync],
-  )
-
-  const value = useMemo<ProfileContextValue>(
-    () => ({
-      profile,
-      online,
-      syncError,
-      updateProfile,
-      updateSurvey,
-      updateNotif,
-      applyStyleKeywords,
-      setTheme,
-      clearHistory,
-      uploadPhoto,
-      removePhoto,
-      saveBanner,
-      uploadBannerImage,
-    }),
-    [
-      profile,
-      online,
-      syncError,
-      updateProfile,
-      updateSurvey,
-      updateNotif,
-      applyStyleKeywords,
-      setTheme,
-      clearHistory,
-      uploadPhoto,
-      removePhoto,
-      saveBanner,
-      uploadBannerImage,
-    ],
-  )
-
-  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
 }
 
 export function useProfile() {
