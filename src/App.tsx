@@ -67,6 +67,7 @@ function App() {
           <Route path="/market/:id" element={<ListingDetail />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/discover/:id" element={<PostDetail />} />
+          <Route path="/outfit" element={<OutfitBuilder />} />
           <Route path="/chat" element={<ChatList />} />
           <Route path="/chat/:id" element={<ChatRoom />} />
           <Route path="/cart" element={<Cart />} />

@@ -1,27 +1,29 @@
-import { Heart, Leaf, MapPin, MessageCircle, Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { CloudOff, Heart, Leaf, MapPin, MessageCircle, Plus, Search } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
+import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
 import { useListings } from '../context/ListingsContext'
+import { useMarketListings } from '../hooks/useMarketListings'
 import { resolveListingImage, type Listing } from '../data/listings'
 import { formatKRW } from '../data/products'
+import { useI18n } from '../i18n'
 
 type Tab = 'near' | 'mine'
 
 export default function Marketplace() {
-  const { listings } = useListings()
+  const { t } = useI18n()
+  const { status, refresh } = useAuth()
+  const { syncError } = useListings()
   const [tab, setTab] = useState<Tab>('near')
   const [query, setQuery] = useState('')
 
-  const visible = useMemo(() => {
-    return listings
-      .filter((l) => (tab === 'mine' ? l.mine : !l.mine))
-      .filter((l) =>
-        query ? l.name.includes(query) || l.seller.includes(query) : true,
-      )
-      .sort((a, b) => a.distanceKm - b.distanceKm)
-  }, [tab, query, listings])
+  const { listings: visible, loading, error } = useMarketListings(tab, query)
+
+  // A failed read is already phrased for the user; a failed write needs the
+  // "could not save" framing so it does not read as the list being wrong.
+  const notice = error ?? (syncError && t('auth.syncError', { message: syncError }))
 
   return (
     <div className="pb-24">
@@ -29,14 +31,33 @@ export default function Marketplace() {
 
       <header className="flex items-center justify-between px-5 pb-3 pt-2">
         <h1 className="font-display text-xl font-medium text-ink-900">마켓</h1>
-        <Link
-          to="/chat"
-          aria-label="채팅 목록"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-moss-100 text-moss-700"
-        >
-          <MessageCircle size={18} />
-        </Link>
+        <div className="flex items-center gap-2">
+          {status === 'offline' && (
+            <button
+              type="button"
+              onClick={refresh}
+              title={t('auth.offline.note')}
+              className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
+            >
+              <CloudOff size={13} />
+              {t('auth.offline.badge')}
+            </button>
+          )}
+          <Link
+            to="/chat"
+            aria-label="채팅 목록"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-moss-100 text-moss-700"
+          >
+            <MessageCircle size={18} />
+          </Link>
+        </div>
       </header>
+
+      {notice && (
+        <p role="alert" className="mx-5 mb-3 rounded-xl bg-clay-100 px-3 py-2 text-xs text-clay-600">
+          {notice}
+        </p>
+      )}
 
       <div className="flex items-center gap-2 px-5">
         <div className="flex flex-1 items-center gap-2 rounded-full bg-moss-100 px-4 py-3 text-sm">
@@ -85,7 +106,13 @@ export default function Marketplace() {
         ))}
         {visible.length === 0 && (
           <p className="py-12 text-center text-sm text-moss-500">
-            {tab === 'mine' ? '등록한 판매글이 없어요.' : '주변에 등록된 아이템이 없어요.'}
+            {loading
+              ? '불러오는 중…'
+              : query
+                ? '검색 결과가 없어요.'
+                : tab === 'mine'
+                  ? '등록한 판매글이 없어요.'
+                  : '주변에 등록된 아이템이 없어요.'}
           </p>
         )}
       </div>

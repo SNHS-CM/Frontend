@@ -81,3 +81,37 @@ export interface ApiVerificationSent {
   /** Only present while the backend runs with DEBUG=true. */
   debugCode: string | null
 }
+
+// --- market -----------------------------------------------------------------
+
+/** The four states the backend accepts, same tokens the UI shows. */
+export type ApiListingCondition = '새상품' | '거의 새것' | '사용감 조금 있음' | '사용감 있음'
+
+export interface ApiListing {
+  id: string
+  name: string
+  /** '' when the seller left it blank — the API never sends null here. */
+  brand: string
+  seller: string
+  distanceKm: number
+  size: string
+  /** Original price, null when the seller did not enter one. */
+  price: number | null
+  discountedPrice: number | null
+  points: number
+  condition: ApiListingCondition
+  /** Placeholder image seed, used when the listing has no photo. */
+  seed: string
+  description: string
+  /** Server path like `/media/listings/x.png`, or '' when there is no photo. */
+  imageUrl: string
+  /** True only for the signed-in seller — the same listing reads false to others. */
+  mine: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ApiConditionOption {
+  value: ApiListingCondition
+  label: string
+}

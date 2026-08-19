@@ -1,3 +1,6 @@
+import { assetUrl } from '../api/client'
+import type { ListingPayload, MarketTab } from '../api/market'
+import type { ApiListing } from '../api/types'
 import { productImage } from './products'
 
 export interface Listing {
@@ -39,7 +42,69 @@ export function listingImage(id: string) {
 // A listing's own uploaded photo wins, then a file dropped into
 // src/assets/listings/, then the placeholder fallback.
 export function resolveListingImage(listing: Listing, w = 600, h = 800) {
-  return listing.imageUrl ?? listingImage(listing.id) ?? productImage(listing.seed, w, h)
+  if (listing.imageUrl) return listing.imageUrl
+  // Server-side listings carry a uuid, so the bundled files are also matched by
+  // seed ('market-3' -> 3.png) — that is what keeps the seeded photos showing.
+  const seedKey = listing.seed.replace(/^market-/, '')
+  return (
+    listingImage(listing.id) ??
+    listingImage(seedKey) ??
+    productImage(listing.seed, w, h)
+  )
+}
+
+// --- api mapping -------------------------------------------------------------
+// The backend serializes camelCase, so the shapes line up field for field. The
+// only translation is empty string vs. undefined: the API always sends a value,
+// while the app's optional fields read better as absent.
+
+export function listingFromApi(dto: ApiListing): Listing {
+  return {
+    id: dto.id,
+    name: dto.name,
+    brand: dto.brand || undefined,
+    seller: dto.seller,
+    distanceKm: dto.distanceKm,
+    size: dto.size,
+    price: dto.price ?? undefined,
+    discountedPrice: dto.discountedPrice ?? undefined,
+    points: dto.points,
+    condition: dto.condition,
+    seed: dto.seed,
+    description: dto.description || undefined,
+    // '/media/...' is relative to the API host, not the dev server.
+    imageUrl: dto.imageUrl ? assetUrl(dto.imageUrl) : undefined,
+    mine: dto.mine,
+  }
+}
+
+/** What the seller fills in. Everything else on a Listing is server-owned. */
+export type ListingInput = Omit<
+  Listing,
+  'id' | 'seller' | 'distanceKm' | 'mine' | 'seed' | 'imageUrl'
+>
+
+export function listingToPayload(input: ListingInput): ListingPayload {
+  return {
+    name: input.name,
+    brand: input.brand ?? '',
+    size: input.size,
+    condition: input.condition,
+    price: input.price ?? null,
+    discountedPrice: input.discountedPrice ?? 0,
+    points: input.points,
+    description: input.description ?? '',
+  }
+}
+
+/** The same narrowing GET /api/market/listings does, for offline mode.
+ *  Kept next to the mapper so the two paths cannot drift apart. */
+export function filterListings(rows: Listing[], tab: MarketTab, query: string): Listing[] {
+  const term = query.trim()
+  return rows
+    .filter((l) => (tab === 'all' ? true : tab === 'mine' ? l.mine : !l.mine))
+    .filter((l) => (term ? l.name.includes(term) || l.seller.includes(term) : true))
+    .sort((a, b) => a.distanceKm - b.distanceKm)
 }
 
 export const seedListings: Listing[] = [
