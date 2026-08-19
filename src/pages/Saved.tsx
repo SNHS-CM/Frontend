@@ -1,5 +1,5 @@
 import { ArrowLeft, Bookmark, Heart } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Chip from '../components/Chip'
 import { useListings } from '../context/ListingsContext'
@@ -30,71 +30,87 @@ interface SavedItem {
 
 export default function Saved() {
   const navigate = useNavigate()
-  const { likedKeys, toggleLike: toggleWishlist } = useWishlist()
+  const {
+    likedKeys,
+    toggleLike: toggleWishlistLike,
+    savedKeys,
+    toggleSave: toggleWishlistSave,
+  } = useWishlist()
   const { listings } = useListings()
-  const { likedPosts, savedPosts, toggleLike: togglePostLike, toggleSave } = usePosts()
+  const {
+    likedPosts,
+    savedPosts,
+    toggleLike: togglePostLike,
+    toggleSave: togglePostSave,
+  } = usePosts()
 
   const [tab, setTab] = useState<Tab>('liked')
   const [kindFilter, setKindFilter] = useState<ItemKind | null>(null)
 
-  const likedItems = useMemo<SavedItem[]>(() => {
-    const fromWishlist = likedKeys
-      .map((key): SavedItem | null => {
-        const [kind, id] = key.split(':') as ['product' | 'listing', string]
+  /** Turns "product:p1" / "listing:3" keys into cards, whichever list they came from. */
+  const resolveWishlistKeys = useCallback(
+    (keys: string[], remove: (kind: 'product' | 'listing', id: string) => void) =>
+      keys
+        .map((key): SavedItem | null => {
+          const [kind, id] = key.split(':') as ['product' | 'listing', string]
 
-        if (kind === 'product') {
-          const product = products.find((p) => p.id === id)
-          if (!product) return null
+          if (kind === 'product') {
+            const product = products.find((p) => p.id === id)
+            if (!product) return null
+            return {
+              key,
+              kind: 'product',
+              href: `/product/${id}`,
+              image: productImage(product.seed, 400, 500),
+              title: product.name,
+              subtitle: formatKRW(product.price),
+              remove: () => remove('product', id),
+            }
+          }
+
+          const listing = listings.find((l) => l.id === id)
+          if (!listing) return null
           return {
             key,
-            kind: 'product',
-            href: `/product/${id}`,
-            image: productImage(product.seed, 400, 500),
-            title: product.name,
-            subtitle: formatKRW(product.price),
-            remove: () => toggleWishlist('product', id),
+            kind: 'listing',
+            href: `/market/${id}`,
+            image: resolveListingImage(listing, 400, 500),
+            title: listing.name,
+            subtitle: formatKRW(listing.discountedPrice ?? listing.price ?? 0),
+            remove: () => remove('listing', id),
           }
-        }
+        })
+        .filter((x): x is SavedItem => x !== null),
+    [listings],
+  )
 
-        const listing = listings.find((l) => l.id === id)
-        if (!listing) return null
-        return {
-          key,
-          kind: 'listing',
-          href: `/market/${id}`,
-          image: resolveListingImage(listing, 400, 500),
-          title: listing.name,
-          subtitle: formatKRW(listing.discountedPrice ?? listing.price ?? 0),
-          remove: () => toggleWishlist('listing', id),
-        }
-      })
-      .filter((x): x is SavedItem => x !== null)
-
-    const fromPosts = likedPosts.map<SavedItem>((post) => ({
+  const postCard = useCallback(
+    (post: (typeof likedPosts)[number], remove: (id: string) => void): SavedItem => ({
       key: `post:${post.id}`,
       kind: 'post',
       href: `/discover/${post.id}`,
       image: resolvePostImage(post, 400, 500),
       title: post.title,
       subtitle: `${post.author.name} · ${post.author.heightCm}cm`,
-      remove: () => togglePostLike(post.id),
-    }))
+      remove: () => remove(post.id),
+    }),
+    [],
+  )
 
-    return [...fromWishlist, ...fromPosts]
-  }, [likedKeys, listings, likedPosts, toggleWishlist, togglePostLike])
+  const likedItems = useMemo<SavedItem[]>(
+    () => [
+      ...resolveWishlistKeys(likedKeys, toggleWishlistLike),
+      ...likedPosts.map((post) => postCard(post, togglePostLike)),
+    ],
+    [likedKeys, resolveWishlistKeys, toggleWishlistLike, likedPosts, postCard, togglePostLike],
+  )
 
   const savedItems = useMemo<SavedItem[]>(
-    () =>
-      savedPosts.map((post) => ({
-        key: `post:${post.id}`,
-        kind: 'post',
-        href: `/discover/${post.id}`,
-        image: resolvePostImage(post, 400, 500),
-        title: post.title,
-        subtitle: `${post.author.name} · ${post.author.heightCm}cm`,
-        remove: () => toggleSave(post.id),
-      })),
-    [savedPosts, toggleSave],
+    () => [
+      ...resolveWishlistKeys(savedKeys, toggleWishlistSave),
+      ...savedPosts.map((post) => postCard(post, togglePostSave)),
+    ],
+    [savedKeys, resolveWishlistKeys, toggleWishlistSave, savedPosts, postCard, togglePostSave],
   )
 
   const items = tab === 'liked' ? likedItems : savedItems
@@ -120,7 +136,7 @@ export default function Saved() {
         {(
           [
             ['liked', '좋아요', likedItems.length],
-            ['saved', '저장', savedItems.length],
+            ['saved', '즐겨찾기', savedItems.length],
           ] as [Tab, string, number][]
         ).map(([value, label, count]) => (
           <button
@@ -187,7 +203,7 @@ function SavedCard({ item, tab }: { item: SavedItem; tab: Tab }) {
             e.preventDefault()
             item.remove()
           }}
-          aria-label={tab === 'liked' ? '좋아요 해제' : '저장 해제'}
+          aria-label={tab === 'liked' ? '좋아요 해제' : '즐겨찾기 해제'}
           className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-sand-50/90 backdrop-blur"
         >
           {tab === 'liked' ? (
@@ -216,13 +232,13 @@ function EmptyState({ tab }: { tab: Tab }) {
         )}
       </div>
       <p className="text-sm text-moss-500">
-        {tab === 'liked' ? '좋아요한 항목이 없어요' : '저장한 코디가 없어요'}
+        {tab === 'liked' ? '좋아요한 항목이 없어요' : '즐겨찾기한 항목이 없어요'}
       </p>
       <Link
-        to={tab === 'liked' ? '/home' : '/discover'}
+        to="/home"
         className="mt-2 rounded-full bg-moss-700 px-5 py-2.5 text-sm font-medium text-cream"
       >
-        {tab === 'liked' ? '쇼핑 둘러보기' : '코디 둘러보기'}
+        둘러보기
       </Link>
     </div>
   )
