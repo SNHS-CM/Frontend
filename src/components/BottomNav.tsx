@@ -1,4 +1,4 @@
-import { Compass, Home, Store, ShoppingCart, User } from 'lucide-react'
+import { Compass, Home, Shirt, ShoppingCart, Store, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
