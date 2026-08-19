@@ -1,4 +1,4 @@
-import { Home, Store, ShoppingBag, ShoppingCart, User } from 'lucide-react'
+import { Home, Shirt, Store, ShoppingBag, ShoppingCart, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
@@ -6,6 +6,7 @@ const items = [
   { to: '/home', label: '홈', icon: Home },
   { to: '/shop', label: '쇼핑', icon: ShoppingBag },
   { to: '/market', label: '마켓', icon: Store },
+  { to: '/outfit', label: '코디', icon: Shirt },
   { to: '/cart', label: '장바구니', icon: ShoppingCart },
   { to: '/profile', label: '마이', icon: User },
 ]

@@ -3,6 +3,7 @@ import AppShell from './layouts/AppShell'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import Shop from './pages/Shop'
+import OutfitBuilder from './pages/OutfitBuilder'
 import ProductDetail from './pages/ProductDetail'
 import Marketplace from './pages/Marketplace'
 import ListingDetail from './pages/ListingDetail'
@@ -21,6 +22,7 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/home" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/outfit" element={<OutfitBuilder />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/market" element={<Marketplace />} />
         <Route path="/market/new" element={<ListingForm />} />
