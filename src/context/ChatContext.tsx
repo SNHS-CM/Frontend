@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { Listing } from '../data/listings'
 import type { OutfitPost } from '../data/posts'
+import type { Product } from '../data/products'
 
 export interface ChatMessage {
   id: string
@@ -9,8 +10,8 @@ export interface ChatMessage {
   time: string
 }
 
-/** A conversation always hangs off something — a market listing or a discover post. */
-export type SubjectKind = 'listing' | 'post'
+/** A conversation always hangs off something — a shop product, market listing, or discover post. */
+export type SubjectKind = 'listing' | 'post' | 'product'
 
 export interface Conversation {
   id: string
@@ -26,6 +27,7 @@ interface ChatContextValue {
   conversations: Conversation[]
   startOrOpenChat: (listing: Listing) => string
   startOrOpenPostChat: (post: OutfitPost) => string
+  startOrOpenProductChat: (product: Product) => string
   sendMessage: (conversationId: string, text: string) => void
 }
 
@@ -45,8 +47,27 @@ const POST_REPLIES = [
   '해당 아이템은 마켓에도 올려뒀어요!',
 ]
 
+const PRODUCT_REPLIES = [
+  '안녕하세요, 브랜드 상담팀입니다 😊 무엇을 도와드릴까요?',
+  '해당 제품은 정사이즈로 나왔어요!',
+  '소재와 세탁 방법은 상세페이지에서도 확인하실 수 있어요.',
+  '재입고 알림을 신청해두시면 알려드릴게요!',
+]
+
+const REPLY_POOLS: Record<SubjectKind, string[]> = {
+  listing: LISTING_REPLIES,
+  post: POST_REPLIES,
+  product: PRODUCT_REPLIES,
+}
+
+const SUBJECT_PATH: Record<SubjectKind, string> = {
+  listing: '/market',
+  post: '/discover',
+  product: '/product',
+}
+
 export function subjectHref(c: Conversation) {
-  return c.subjectKind === 'listing' ? `/market/${c.subjectId}` : `/discover/${c.subjectId}`
+  return `${SUBJECT_PATH[c.subjectKind]}/${c.subjectId}`
 }
 
 function timeNow() {
@@ -132,6 +153,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       '안녕하세요! 코디에 대해 궁금한 점 있으면 물어보세요 :)',
     )
 
+  const startOrOpenProductChat = (product: Product) =>
+    startOrOpen(
+      'product',
+      product.id,
+      product.name,
+      product.seed,
+      product.brand,
+      '안녕하세요! 제품에 대해 궁금한 점 있으면 편하게 물어보세요 :)',
+    )
+
   const sendMessage = (conversationId: string, text: string) => {
     if (!text.trim()) return
     const myMessage: ChatMessage = { id: `m-${Date.now()}`, from: 'me', text, time: timeNow() }
@@ -143,7 +174,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== conversationId) return c
-          const pool = c.subjectKind === 'post' ? POST_REPLIES : LISTING_REPLIES
+          const pool = REPLY_POOLS[c.subjectKind]
           const theirMessage: ChatMessage = {
             id: `m-${Date.now()}-r`,
             from: 'them',
@@ -158,7 +189,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   return (
     <ChatContext.Provider
-      value={{ conversations, startOrOpenChat, startOrOpenPostChat, sendMessage }}
+      value={{
+        conversations,
+        startOrOpenChat,
+        startOrOpenPostChat,
+        startOrOpenProductChat,
+        sendMessage,
+      }}
     >
       {children}
     </ChatContext.Provider>

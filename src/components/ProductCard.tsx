@@ -1,11 +1,12 @@
-import { Heart } from 'lucide-react'
+import { Bookmark, Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useWishlist } from '../context/WishlistContext'
 import { formatKRW, productImage, type Product } from '../data/products'
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { isLiked, toggleLike } = useWishlist()
-  const saved = isLiked('product', product.id)
+  const { isLiked, toggleLike, isSaved, toggleSave } = useWishlist()
+  const liked = isLiked('product', product.id)
+  const saved = isSaved('product', product.id)
 
   return (
     <Link to={`/product/${product.id}`} className="group block">
@@ -21,20 +22,35 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.tag}
           </span>
         )}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault()
-            toggleLike('product', product.id)
-          }}
-          aria-label="위시리스트에 담기"
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-sand-50/90 backdrop-blur"
-        >
-          <Heart
-            size={14}
-            className={saved ? 'fill-clay-500 text-clay-500' : 'text-moss-700'}
-          />
-        </button>
+        <div className="absolute right-2 top-2 flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              toggleLike('product', product.id)
+            }}
+            aria-label="좋아요"
+            aria-pressed={liked}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-sand-50/90 backdrop-blur"
+          >
+            <Heart size={14} className={liked ? 'fill-clay-500 text-clay-500' : 'text-moss-700'} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              toggleSave('product', product.id)
+            }}
+            aria-label="즐겨찾기"
+            aria-pressed={saved}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-sand-50/90 backdrop-blur"
+          >
+            <Bookmark
+              size={14}
+              className={saved ? 'fill-moss-700 text-moss-700' : 'text-moss-700'}
+            />
+          </button>
+        </div>
       </div>
       <div className="mt-2 space-y-0.5">
         <p className="text-[11px] uppercase tracking-wide text-moss-500">{product.brand}</p>
