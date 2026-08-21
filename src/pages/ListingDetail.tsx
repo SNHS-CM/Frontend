@@ -1,5 +1,5 @@
 import { ArrowLeft, Heart, MessageCircle, Pencil } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useChat } from '../context/ChatContext'
@@ -14,11 +14,34 @@ export default function ListingDetail() {
   const { addToCart } = useCart()
   const { isLiked, toggleLike } = useWishlist()
   const { startOrOpenChat } = useChat()
-  const { getListing } = useListings()
+  const { listings, fetchListing } = useListings()
   const [justAdded, setJustAdded] = useState(false)
+  const [notFound, setNotFound] = useState(false)
 
-  const listing = getListing(id ?? '')
-  if (!listing) return <Navigate to="/market" replace />
+  // Reading from the array keeps the page live: an edit elsewhere re-renders it.
+  const listing = listings.find((l) => l.id === id)
+
+  // Opening the page from a link or a reload can land on a listing the market
+  // has not loaded, so fall back to fetching this one on its own.
+  useEffect(() => {
+    if (listing || !id) return
+    let cancelled = false
+    void fetchListing(id).then((found) => {
+      if (!cancelled && !found) setNotFound(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [id, listing, fetchListing])
+
+  if (notFound || !id) return <Navigate to="/market" replace />
+  if (!listing) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-moss-500">
+        불러오는 중…
+      </div>
+    )
+  }
 
   const saved = isLiked('listing', listing.id)
   const price = listing.discountedPrice ?? listing.price

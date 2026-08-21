@@ -82,77 +82,36 @@ export interface ApiVerificationSent {
   debugCode: string | null
 }
 
-// --- 아웃핏 빌더 ------------------------------------------------------------
+// --- market -----------------------------------------------------------------
 
-export type GarmentType = 'top' | 'bottom' | 'shoes'
+/** The four states the backend accepts, same tokens the UI shows. */
+export type ApiListingCondition = '새상품' | '거의 새것' | '사용감 조금 있음' | '사용감 있음'
 
-/** 등록한 옷. 백엔드 GarmentOut 과 1:1. */
-export interface ApiGarment {
+export interface ApiListing {
   id: string
-  type: GarmentType
   name: string
-  color: string
-  colorHex: string
-  style: string | null
-  fit: string | null
-  imageUrl: string
-  emoji: string
-  /** 0~100 색 매칭 점수 */
-  matchScore: number
-  /** 매치 임계값(70)을 넘었는지 — 옷 매치 여부 */
-  isMatch: boolean
-  co2SavedKg: number
-  /** 옷을 저장한 날짜 */
-  savedAt: string
-  updatedAt: string
-}
-
-/** 최근 본 옷 한 건. */
-export interface ApiGarmentView {
-  garment: ApiGarment
-  viewCount: number
-  viewedAt: string
-}
-
-export interface ApiOutfitItem {
-  id: string
-  productId: string
-  slot: string
-  position: number
-}
-
-export interface ApiOutfit {
-  id: string
-  /** 코디 이름 */
-  title: string
+  /** '' when the seller left it blank — the API never sends null here. */
+  brand: string
+  seller: string
+  distanceKm: number
+  size: string
+  /** Original price, null when the seller did not enter one. */
+  price: number | null
+  discountedPrice: number | null
+  points: number
+  condition: ApiListingCondition
+  /** Placeholder image seed, used when the listing has no photo. */
+  seed: string
   description: string
-  coverImageUrl: string
-  season: string
-  likes: number
-  items: ApiOutfitItem[]
-  top: ApiGarment | null
-  bottom: ApiGarment | null
-  shoes: ApiGarment | null
-  comboKey: string | null
-  /** 코디 색상 매치 점수 */
-  colorMatchScore: number
-  /** 코디 저장 여부(북마크) */
-  bookmarked: boolean
-  bookmarkedAt: string | null
-  co2SavedKg: number
-  ecoPoints: number
+  /** Server path like `/media/listings/x.png`, or '' when there is no photo. */
+  imageUrl: string
+  /** True only for the signed-in seller — the same listing reads false to others. */
+  mine: boolean
   createdAt: string
   updatedAt: string
 }
 
-/** 저장 전에 조합 점수와 보상을 미리 계산한 결과. */
-export interface ApiOutfitPreview {
-  comboKey: string | null
-  colorMatchScore: number
-  co2SavedKg: number
-  ecoPoints: number
-  /** 이미 저장한 조합인지 */
-  saved: boolean
-  outfitId: string | null
-  bookmarked: boolean
+export interface ApiConditionOption {
+  value: ApiListingCondition
+  label: string
 }
