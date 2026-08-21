@@ -12,6 +12,7 @@ import ListingDetail from './pages/ListingDetail'
 import ListingForm from './pages/ListingForm'
 import Discover from './pages/Discover'
 import PostDetail from './pages/PostDetail'
+import AuthorPosts from './pages/AuthorPosts'
 import OutfitBuilder from './pages/OutfitBuilder'
 import ChatList from './pages/ChatList'
 import ChatRoom from './pages/ChatRoom'
@@ -24,13 +25,12 @@ const PUBLIC_PATHS = ['/login', '/signup', '/onboarding']
 
 /** Sends signed-out users to the login screen.
  *
- *  Only `guest` redirects: that means the server answered and rejected us. When
- *  the backend is unreachable the app stays in `offline` mode and every screen
- *  keeps working against localStorage, so we never trap the user behind a login
- *  form that cannot succeed.
+ *  `signedIn` covers both a real session and the offline fallback, so an
+ *  unreachable backend no longer means an open app — but it never traps the
+ *  user either, because the login screen works locally when the server is down.
  */
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { status } = useAuth()
+  const { status, signedIn } = useAuth()
   const { t } = useI18n()
   const { pathname } = useLocation()
 
@@ -42,22 +42,32 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (status === 'guest' && !PUBLIC_PATHS.includes(pathname)) {
+  if (!signedIn && !PUBLIC_PATHS.includes(pathname)) {
     return <Navigate to="/login" replace />
   }
 
   return <>{children}</>
 }
 
+/** First screen of the app.
+ *
+ *  A live session goes straight to the feed; everyone else starts at the
+ *  onboarding intro, which explains the app and then hands off to signup/login.
+ */
+function Landing() {
+  const { signedIn } = useAuth()
+  return <Navigate to={signedIn ? '/home' : '/onboarding'} replace />
+}
+
 function App() {
   return (
     <AuthGate>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
         <Route element={<AppShell />}>
-          <Route path="/" element={<Navigate to="/onboarding" replace />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
           <Route path="/shop" element={<Navigate to="/home" replace />} />
           <Route path="/product/:id" element={<ProductDetail />} />
@@ -67,6 +77,7 @@ function App() {
           <Route path="/market/:id" element={<ListingDetail />} />
           <Route path="/outfit" element={<OutfitBuilder />} />
           <Route path="/discover" element={<Discover />} />
+          <Route path="/discover/author/:authorId" element={<AuthorPosts />} />
           <Route path="/discover/:id" element={<PostDetail />} />
           <Route path="/chat" element={<ChatList />} />
           <Route path="/chat/:id" element={<ChatRoom />} />

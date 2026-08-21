@@ -5,6 +5,7 @@ import { useChat } from '../context/ChatContext'
 import { usePosts } from '../context/PostsContext'
 import {
   authorAvatar,
+  authorKey,
   formatPostedAt,
   resolvePostImage,
   type OutfitItem,
@@ -130,17 +131,27 @@ export default function PostDetail() {
 
         <div className="rounded-2xl bg-moss-100 p-4">
           <div className="flex items-center gap-3">
-            <img
-              src={authorAvatar(post.author)}
-              alt={post.author.name}
-              className="h-11 w-11 rounded-full object-cover"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-ink-900">{post.author.name}</p>
-              <p className="text-xs text-moss-500">
-                {post.author.heightCm}cm · {post.author.weightKg}kg
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/discover/author/${encodeURIComponent(authorKey(post.author))}`)
+              }
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            >
+              <img
+                src={authorAvatar(post.author)}
+                alt={post.author.name}
+                className="h-11 w-11 rounded-full object-cover"
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-ink-900 underline decoration-moss-300 underline-offset-2">
+                  {post.author.name}
+                </p>
+                <p className="text-xs text-moss-500">
+                  {post.author.heightCm}cm · {post.author.weightKg}kg · 코디 전체 보기
+                </p>
+              </div>
+            </button>
             <button
               type="button"
               onClick={handleChat}

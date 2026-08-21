@@ -1,6 +1,6 @@
 import { Bookmark, CloudOff, Heart, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Chip from '../components/Chip'
 import StatusBar from '../components/StatusBar'
 import DiscoverFilterSheet, {
@@ -13,6 +13,7 @@ import { usePosts } from '../context/PostsContext'
 import { useDiscoverPosts } from '../hooks/useDiscoverPosts'
 import {
   authorAvatar,
+  authorKey,
   formatPostedAt,
   outfitCategories,
   resolvePostImage,
@@ -154,7 +155,7 @@ export default function Discover() {
   )
 }
 
-function PostCard({
+export function PostCard({
   post,
   liked,
   saved,
@@ -169,6 +170,8 @@ function PostCard({
   onToggleLike: () => void
   onToggleSave: () => void
 }) {
+  const navigate = useNavigate()
+
   return (
     <Link to={`/discover/${post.id}`} className="group block">
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-moss-100">
@@ -212,16 +215,23 @@ function PostCard({
 
       <div className="mt-2 space-y-1">
         <p className="line-clamp-2 text-sm font-medium leading-snug text-ink-900">{post.title}</p>
-        <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            navigate(`/discover/author/${encodeURIComponent(authorKey(post.author))}`)
+          }}
+          className="flex w-full items-center gap-1.5 text-left"
+        >
           <img
             src={authorAvatar(post.author, 40)}
             alt={post.author.name}
             className="h-4 w-4 rounded-full object-cover"
           />
-          <p className="truncate text-[11px] text-moss-500">
+          <p className="truncate text-[11px] text-moss-500 underline decoration-moss-200 underline-offset-2">
             {post.author.name} · {post.author.heightCm}cm
           </p>
-        </div>
+        </button>
         <div className="flex items-center justify-between text-[11px] text-moss-400">
           <span className="flex items-center gap-1">
             <Heart size={11} className={liked ? 'fill-clay-500 text-clay-500' : ''} />

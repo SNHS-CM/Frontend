@@ -6,6 +6,8 @@ export default function AppShell() {
   const hideNav =
     pathname === '/' ||
     pathname === '/onboarding' ||
+    pathname === '/login' ||
+    pathname === '/signup' ||
     pathname.startsWith('/product/') ||
     pathname.startsWith('/market/') ||
     pathname.startsWith('/discover/') ||
