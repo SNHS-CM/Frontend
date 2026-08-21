@@ -1,7 +1,7 @@
 import { Bookmark, Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useWishlist } from '../context/WishlistContext'
-import { formatKRW, productImage, type Product } from '../data/products'
+import { formatKRW, resolveProductImage, type Product } from '../data/products'
 
 export default function ProductCard({ product }: { product: Product }) {
   const { isLiked, toggleLike, isSaved, toggleSave } = useWishlist()
@@ -12,7 +12,7 @@ export default function ProductCard({ product }: { product: Product }) {
     <Link to={`/product/${product.id}`} className="group block">
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-moss-100">
         <img
-          src={productImage(product.seed)}
+          src={resolveProductImage(product)}
           alt={product.name}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-300 group-active:scale-95"

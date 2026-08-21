@@ -1,3 +1,6 @@
+import { assetUrl } from '../api/client'
+import type { ApiProduct } from '../api/types'
+
 export type Category = '아우터' | '상의' | '하의' | '원피스' | '액세서리'
 export type ProductColor = '블랙' | '화이트' | '베이지' | '그레이' | '그린' | '블루' | '브라운'
 export type Season = '봄' | '여름' | '가을' | '겨울' | '사계절'
@@ -15,6 +18,9 @@ export interface Product {
   rating: number
   seed: string
   tag?: '신상' | '베스트' | '세일'
+  /** 서버에 업로드된 옷 사진. 없으면 seed 로 플레이스홀더를 만든다. */
+  imageUrl?: string
+  description?: string
 }
 
 export const categories: Category[] = ['아우터', '상의', '하의', '원피스', '액세서리']
@@ -206,6 +212,33 @@ export const products: Product[] = [
 
 export function productImage(seed: string, w = 600, h = 800) {
   return `https://picsum.photos/seed/${seed}/${w}/${h}`
+}
+
+/** 카드와 상세 화면이 쓸 사진 한 장. 업로드본이 있으면 그것을, 없으면 seed 로
+ *  만든 플레이스홀더를 돌려준다. */
+export function resolveProductImage(product: Product, w = 600, h = 800) {
+  return product.imageUrl || productImage(product.seed, w, h)
+}
+
+/** 백엔드 ProductOut -> 화면이 쓰는 Product. */
+export function productFromApi(dto: ApiProduct): Product {
+  return {
+    id: dto.id,
+    name: dto.name,
+    brand: dto.brand,
+    price: dto.price,
+    category: dto.category,
+    color: dto.color,
+    season: dto.season,
+    material: dto.material,
+    co2: dto.co2,
+    rating: dto.rating,
+    seed: dto.seed,
+    tag: dto.tag ?? undefined,
+    // '/media/...' 는 API 호스트 기준이라 dev 서버 주소로 붙이면 안 된다.
+    imageUrl: dto.imageUrl ? assetUrl(dto.imageUrl) : undefined,
+    description: dto.description || undefined,
+  }
 }
 
 export function formatKRW(value: number) {

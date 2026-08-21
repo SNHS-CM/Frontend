@@ -1,11 +1,7 @@
 import { ChevronDown, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import {
-  categories,
-  productColors,
-  type Category,
-  type ProductColor,
-} from '../data/products'
+import { useCatalogOptions } from '../hooks/useCatalogOptions'
+import type { Category, ProductColor } from '../data/products'
 
 export interface CategoryFilterValue {
   categories: Category[]
@@ -46,6 +42,8 @@ export default function CategoryFilter({
   onClose: () => void
   onApply: (next: CategoryFilterValue) => void
 }) {
+  // 선택지는 서버에서 받고, 못 받으면 상수로 폴백한다.
+  const { categories, colors: productColors } = useCatalogOptions()
   const [draft, setDraft] = useState<CategoryFilterValue>(value)
   const [openSection, setOpenSection] = useState<SectionKey | null>('type')
 

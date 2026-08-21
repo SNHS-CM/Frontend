@@ -4,7 +4,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useChat } from '../context/ChatContext'
 import { useWishlist } from '../context/WishlistContext'
-import { formatKRW, productImage, products } from '../data/products'
+import { formatKRW, productImage, resolveProductImage, products } from '../data/products'
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL']
 
@@ -38,7 +38,7 @@ export default function ProductDetail() {
     <div className="flex h-full flex-col">
       <div className="relative aspect-[4/5] shrink-0">
         <img
-          src={productImage(product.seed, 800, 1000)}
+          src={resolveProductImage(product, 800, 1000)}
           alt={product.name}
           className="h-full w-full object-cover"
         />
