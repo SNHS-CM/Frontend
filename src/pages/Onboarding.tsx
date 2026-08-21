@@ -2,6 +2,7 @@ import { CloudOff, Leaf } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
+import { outfitPhoto } from '../data/placeholder'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../i18n'
 
@@ -35,7 +36,7 @@ export default function Onboarding() {
   return (
     <div className="relative flex h-full flex-col text-cream">
       <img
-        src={`https://picsum.photos/seed/${slide.seed}/860/1600`}
+        src={outfitPhoto(slide.seed, 860, 1600)}
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
       />

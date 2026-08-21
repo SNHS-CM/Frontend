@@ -7,6 +7,7 @@ import { useWishlist } from '../context/WishlistContext'
 import { useListings } from '../context/ListingsContext'
 import { resolveListingImage } from '../data/listings'
 import { formatKRW } from '../data/products'
+import { avatarPhoto } from '../data/placeholder'
 
 export default function ListingDetail() {
   const { id } = useParams()
@@ -124,7 +125,7 @@ export default function ListingDetail() {
 
         <div className="flex items-center gap-3 rounded-2xl bg-moss-100 p-3">
           <img
-            src={`https://picsum.photos/seed/${encodeURIComponent(listing.seller)}/100/100`}
+            src={avatarPhoto(listing.seller, 100)}
             alt={listing.seller}
             className="h-10 w-10 rounded-full object-cover"
           />

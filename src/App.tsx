@@ -12,6 +12,7 @@ import ListingDetail from './pages/ListingDetail'
 import ListingForm from './pages/ListingForm'
 import Discover from './pages/Discover'
 import PostDetail from './pages/PostDetail'
+import AuthorPosts from './pages/AuthorPosts'
 import OutfitBuilder from './pages/OutfitBuilder'
 import ChatList from './pages/ChatList'
 import ChatRoom from './pages/ChatRoom'
@@ -76,6 +77,7 @@ function App() {
           <Route path="/market/:id" element={<ListingDetail />} />
           <Route path="/outfit" element={<OutfitBuilder />} />
           <Route path="/discover" element={<Discover />} />
+          <Route path="/discover/author/:authorId" element={<AuthorPosts />} />
           <Route path="/discover/:id" element={<PostDetail />} />
           <Route path="/chat" element={<ChatList />} />
           <Route path="/chat/:id" element={<ChatRoom />} />

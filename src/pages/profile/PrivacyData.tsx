@@ -5,6 +5,7 @@ import Toggle from '../../components/Toggle'
 import { useProfile } from '../../context/ProfileContext'
 import { products } from '../../data/products'
 import { useI18n } from '../../i18n'
+import { clothingPhoto } from '../../data/placeholder'
 
 const SIGNED_DATE = '2026-03-14'
 
@@ -169,7 +170,7 @@ export default function PrivacyData({ onClose }: { onClose: () => void }) {
           {history.map((p) => (
             <div key={p.id} className="w-24 shrink-0">
               <img
-                src={`https://picsum.photos/seed/${p.seed}/240/300`}
+                src={clothingPhoto(p.seed, 240, 300)}
                 alt={p.name}
                 className="aspect-[4/5] w-full rounded-xl object-cover"
               />

@@ -1,6 +1,6 @@
 import { assetUrl } from '../api/client'
 import type { ApiPost } from '../api/types'
-import { productImage } from './products'
+import { avatarPhoto, outfitPhoto } from './placeholder'
 
 export type OutfitCategory = '데일리' | '오피스' | '캐주얼' | '스트릿' | '미니멀' | '빈티지'
 
@@ -22,6 +22,8 @@ export interface OutfitItem {
 }
 
 export interface OutfitAuthor {
+  /** 서버가 준 작성자 id. 로컬 상수 코디에는 없다. */
+  id?: string
   name: string
   avatarSeed: string
   /** 체형 수치 — shown so readers can judge fit against their own body. */
@@ -54,17 +56,18 @@ export interface OutfitPost {
   viewerSaved?: boolean
 }
 
-// Drop real photos into src/assets/posts/ named after a post's `id`
-// (e.g. d1.jpg). Matching files are picked up automatically.
+// Drop real photos into src/assets/posts/ named after a post's `seed`
+// (e.g. outfit-1.jpg). Matching files are picked up automatically.
 const uploadedImages = import.meta.glob('../assets/posts/*.{png,jpg,jpeg,webp}', {
   eager: true,
   import: 'default',
 }) as Record<string, string>
 
-export function postImage(id: string) {
+/** Bundled photo for a post key, if one was dropped in. */
+export function postImage(key: string) {
   const match = Object.entries(uploadedImages).find(([path]) => {
     const filename = path.split('/').pop() ?? ''
-    return filename.startsWith(`${id}.`)
+    return filename.startsWith(`${key}.`)
   })
   return match?.[1]
 }
@@ -72,11 +75,18 @@ export function postImage(id: string) {
 export function resolvePostImage(post: OutfitPost, w = 600, h = 800) {
   // The API sends '' rather than undefined for "no photo", which `??` lets through.
   if (post.imageUrl) return post.imageUrl
-  return postImage(post.id) ?? productImage(post.seed, w, h)
+  // Server-side posts carry a uuid, so seed is what the bundled files match on;
+  // id is still tried so a locally created post can have its own file.
+  return postImage(post.seed) ?? postImage(post.id) ?? outfitPhoto(post.seed, w, h)
+}
+
+/** 작성자 페이지 주소에 쓸 키. 서버 코디는 id, 로컬 상수 코디는 이름이 된다. */
+export function authorKey(author: OutfitAuthor) {
+  return author.id ?? author.name
 }
 
 export function authorAvatar(author: OutfitAuthor, size = 100) {
-  return `https://picsum.photos/seed/${author.avatarSeed}/${size}/${size}`
+  return avatarPhoto(author.avatarSeed, size)
 }
 
 /** "3일 전" for anything within a month, otherwise an absolute date. */
@@ -107,6 +117,7 @@ export function postFromApi(dto: ApiPost): OutfitPost {
     description: dto.description,
     category: dto.category,
     author: {
+      id: dto.author.id,
       name: dto.author.name,
       avatarSeed: dto.author.avatarSeed,
       heightCm: dto.author.heightCm,

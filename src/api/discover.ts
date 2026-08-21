@@ -14,6 +14,8 @@ export type PostFeed = 'all' | 'saved' | 'liked' | 'mine'
 
 export interface PostQuery {
   feed?: PostFeed
+  /** 작성자 id — 그 사람이 올린 글만 */
+  author?: string
   category?: ApiOutfitCategory | null
   /** 제목·설명·작성자·아이템을 함께 검색 */
   q?: string
@@ -30,6 +32,7 @@ export interface PostQuery {
 export function listPosts(query: PostQuery = {}, signal?: AbortSignal) {
   const params = new URLSearchParams()
   if (query.feed) params.set('feed', query.feed)
+  if (query.author) params.set('author', query.author)
   if (query.category) params.set('category', query.category)
   if (query.q?.trim()) params.set('q', query.q.trim())
   // 같은 축의 값은 같은 키를 반복해 넘긴다 (FastAPI 의 리스트 쿼리 규칙).

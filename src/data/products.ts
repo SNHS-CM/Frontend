@@ -1,5 +1,6 @@
 import { assetUrl } from '../api/client'
 import type { ApiProduct } from '../api/types'
+import { clothingPhoto } from './placeholder'
 
 export type Category = '아우터' | '상의' | '하의' | '원피스' | '액세서리'
 export type ProductColor = '블랙' | '화이트' | '베이지' | '그레이' | '그린' | '블루' | '브라운'
@@ -211,7 +212,7 @@ export const products: Product[] = [
 ]
 
 export function productImage(seed: string, w = 600, h = 800) {
-  return `https://picsum.photos/seed/${seed}/${w}/${h}`
+  return clothingPhoto(seed, w, h)
 }
 
 /** 카드와 상세 화면이 쓸 사진 한 장. 업로드본이 있으면 그것을, 없으면 seed 로
