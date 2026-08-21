@@ -79,6 +79,13 @@ const en: Dict = {
   'auth.offline.note': 'The server is unreachable, so changes are saved on this device only.',
   'auth.offline.retry': 'Retry',
   'auth.syncError': 'Could not save to the server: {message}',
+  'auth.local.notice': 'The server is unreachable. You can continue in local mode on this device.',
+  'auth.local.devHint': 'Local account: test@test.com / 1234',
+  'auth.local.loginFailed':
+    'The server is unreachable, so only accounts saved on this device can sign in.',
+  'auth.local.unsupported': 'Offline signup is not available in this browser.',
+  'auth.local.duplicate': 'That email is already in use on this device.',
+  'auth.offline.browse': 'Browse offline',
 
   // outfit builder
   'outfit.title': 'Outfit Builder',
@@ -297,6 +304,12 @@ const ko: Dict = {
   'auth.offline.note': '서버에 연결할 수 없어 변경사항이 이 기기에만 저장돼요.',
   'auth.offline.retry': '다시 연결',
   'auth.syncError': '서버에 저장하지 못했어요: {message}',
+  'auth.local.notice': '서버에 연결할 수 없어요. 이 기기에 저장된 계정으로 계속할 수 있어요.',
+  'auth.local.devHint': '로컬 계정: test@test.com / 1234',
+  'auth.local.loginFailed': '서버에 연결할 수 없어, 이 기기에 저장된 계정으로만 로그인할 수 있어요.',
+  'auth.local.unsupported': '이 브라우저에서는 오프라인 가입을 사용할 수 없어요.',
+  'auth.local.duplicate': '이 기기에서 이미 사용 중인 이메일이에요.',
+  'auth.offline.browse': '둘러보기',
 
   // outfit builder
   'outfit.title': '코디 만들기',

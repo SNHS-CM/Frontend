@@ -160,7 +160,7 @@ function loadLocal(): ProfileState {
 }
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const { status, initialProfile } = useAuth()
+  const { status, initialProfile, localIdentity, signedIn } = useAuth()
   const online = status === 'authenticated'
 
   const [profile, setProfile] = useState<ProfileState>(() =>
@@ -177,13 +177,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     if (initialProfile) setProfile(fromApi(initialProfile))
   }, [initialProfile])
 
+  // Offline sessions have no server profile, so carry over at least the identity
+  // the user signed in with instead of showing the built-in demo account's.
+  useEffect(() => {
+    if (!localIdentity) return
+    setProfile((p) =>
+      p.name === localIdentity.name && p.email === localIdentity.email
+        ? p
+        : { ...p, name: localIdentity.name, email: localIdentity.email },
+    )
+  }, [localIdentity])
+
   // Signing out must not leave the previous account's profile on the device —
   // the local-mode fallback would otherwise persist and re-show it.
-  const prevStatus = useRef(status)
+  const wasSignedIn = useRef(signedIn)
   useEffect(() => {
-    const was = prevStatus.current
-    prevStatus.current = status
-    if (was === 'authenticated' && status === 'guest') {
+    // A re-check (`refresh`) passes through `checking`; that is not a sign-out.
+    if (status === 'checking') return
+    const was = wasSignedIn.current
+    wasSignedIn.current = signedIn
+    if (was && !signedIn) {
       try {
         localStorage.removeItem(STORAGE_KEY)
       } catch {
@@ -192,7 +205,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setProfile(DEFAULT)
       setSyncError(null)
     }
-  }, [status])
+  }, [status, signedIn])
 
   // Offline and guest sessions persist locally, exactly as before.
   useEffect(() => {

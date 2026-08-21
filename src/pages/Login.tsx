@@ -1,4 +1,4 @@
-import { Leaf } from 'lucide-react'
+import { ArrowLeft, CloudOff, Leaf } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -8,7 +8,7 @@ import { useI18n } from '../i18n'
 
 export default function Login() {
   const { t } = useI18n()
-  const { login } = useAuth()
+  const { login, status } = useAuth()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -34,19 +34,39 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-full flex-col pb-10">
       <StatusBar />
 
-      <div className="flex flex-1 flex-col px-6 pt-10">
+      <header className="flex items-center gap-1 px-4 pt-2">
+        <button
+          type="button"
+          onClick={() => navigate('/onboarding')}
+          aria-label="뒤로가기"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-900"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <div className="flex items-center gap-1.5 text-sm font-semibold text-moss-700">
           <Leaf size={18} />
           REWEAVE
         </div>
+      </header>
 
-        <h1 className="mt-8 font-display text-3xl font-medium leading-tight text-ink-900">
+      <div className="flex flex-1 flex-col px-6 pt-6">
+        <h1 className="font-display text-3xl font-medium leading-tight text-ink-900">
           {t('auth.login.title')}
         </h1>
         <p className="mt-2 text-sm text-moss-500">{t('auth.login.sub')}</p>
+
+        {status === 'offline' && (
+          <div className="mt-6 flex items-start gap-2 rounded-2xl bg-clay-100 px-4 py-3 text-clay-600">
+            <CloudOff size={15} className="mt-0.5 shrink-0" />
+            <div className="text-xs leading-relaxed">
+              <p>{t('auth.local.notice')}</p>
+              <p className="mt-1 font-medium">{t('auth.local.devHint')}</p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={submit} className="mt-8 space-y-3">
           <Field

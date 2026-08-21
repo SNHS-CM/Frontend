@@ -1,7 +1,9 @@
-import { Leaf } from 'lucide-react'
+import { CloudOff, Leaf } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
+import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../i18n'
 
 const slides = [
   {
@@ -24,6 +26,9 @@ const slides = [
 export default function Onboarding() {
   const [step, setStep] = useState(0)
   const navigate = useNavigate()
+  const { t } = useI18n()
+  const { status, signedIn, browseOffline } = useAuth()
+
   const isLast = step === slides.length - 1
   const slide = slides[step]
 
@@ -47,7 +52,7 @@ export default function Onboarding() {
           {!isLast && (
             <button
               type="button"
-              onClick={() => navigate('/home')}
+              onClick={() => navigate(signedIn ? '/home' : '/login')}
               className="text-sm text-sand-100/80"
             >
               건너뛰기
@@ -74,11 +79,39 @@ export default function Onboarding() {
 
           <button
             type="button"
-            onClick={() => (isLast ? navigate('/home') : setStep((s) => s + 1))}
+            onClick={() => {
+              if (!isLast) return setStep((s) => s + 1)
+              navigate(signedIn ? '/home' : '/signup')
+            }}
             className="w-full rounded-full bg-clay-500 py-3.5 text-sm font-semibold text-cream active:bg-clay-600"
           >
-            {isLast ? '시작하기' : '다음'}
+            {isLast ? (signedIn ? '시작하기' : t('auth.signup.submit')) : '다음'}
           </button>
+
+          {isLast && !signedIn && (
+            <p className="!mt-4 text-center text-sm text-sand-100/80">
+              {t('auth.signup.hasAccount')}{' '}
+              <Link to="/login" className="font-semibold text-cream underline">
+                {t('auth.login.submit')}
+              </Link>
+            </p>
+          )}
+
+          {/* 서버가 꺼져 있어도 계정 없이 바로 볼 수 있는 길을 남겨 둔다. */}
+          {isLast && status === 'offline' && !signedIn && (
+            <button
+              type="button"
+              onClick={() => {
+                browseOffline()
+                navigate('/home', { replace: true })
+              }}
+              title={t('auth.offline.note')}
+              className="!mt-4 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-sand-50/25 px-3 py-1.5 text-[11px] font-medium text-sand-100/80"
+            >
+              <CloudOff size={13} />
+              {t('auth.offline.badge')} · {t('auth.offline.browse')}
+            </button>
+          )}
         </div>
       </div>
     </div>
