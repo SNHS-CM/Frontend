@@ -1,3 +1,5 @@
+import { assetUrl } from '../api/client'
+import type { ApiPost } from '../api/types'
 import { productImage } from './products'
 
 export type OutfitCategory = '데일리' | '오피스' | '캐주얼' | '스트릿' | '미니멀' | '빈티지'
@@ -42,6 +44,14 @@ export interface OutfitPost {
   items: OutfitItem[]
   likes: number
   saves: number
+  shares?: number
+  /** True when the signed-in user wrote it. */
+  mine?: boolean
+  /** What the server said about *my* like/save when this post was loaded.
+   *  The live answer comes from WishlistContext; these are only used to work
+   *  back to "everyone else's" count so my own toggle is not counted twice. */
+  viewerLiked?: boolean
+  viewerSaved?: boolean
 }
 
 // Drop real photos into src/assets/posts/ named after a post's `id`
@@ -60,7 +70,9 @@ export function postImage(id: string) {
 }
 
 export function resolvePostImage(post: OutfitPost, w = 600, h = 800) {
-  return post.imageUrl ?? postImage(post.id) ?? productImage(post.seed, w, h)
+  // The API sends '' rather than undefined for "no photo", which `??` lets through.
+  if (post.imageUrl) return post.imageUrl
+  return postImage(post.id) ?? productImage(post.seed, w, h)
 }
 
 export function authorAvatar(author: OutfitAuthor, size = 100) {
@@ -84,6 +96,81 @@ export function formatPostedAt(iso: string) {
 
 function daysAgo(days: number) {
   return new Date(Date.now() - days * 86_400_000).toISOString()
+}
+
+// --- api mapping -------------------------------------------------------------
+
+export function postFromApi(dto: ApiPost): OutfitPost {
+  return {
+    id: dto.id,
+    title: dto.title,
+    description: dto.description,
+    category: dto.category,
+    author: {
+      name: dto.author.name,
+      avatarSeed: dto.author.avatarSeed,
+      heightCm: dto.author.heightCm,
+      weightKg: dto.author.weightKg,
+      usualTopSize: dto.author.usualTopSize,
+      usualBottomSize: dto.author.usualBottomSize,
+    },
+    postedAt: dto.postedAt,
+    seed: dto.seed,
+    // '/media/...' is relative to the API host, not the dev server.
+    imageUrl: dto.imageUrl ? assetUrl(dto.imageUrl) : undefined,
+    items: dto.items.map((i) => ({
+      role: i.role,
+      brand: i.brand,
+      name: i.name,
+      size: i.size || undefined,
+    })),
+    likes: dto.likes,
+    saves: dto.saves,
+    shares: dto.shares,
+    mine: dto.mine,
+    viewerLiked: dto.liked,
+    viewerSaved: dto.saved,
+  }
+}
+
+/** The same narrowing GET /api/discover/posts does, for offline mode.
+ *  Kept next to the mapper so the two paths cannot drift apart. */
+export interface PostFilter {
+  category?: OutfitCategory | null
+  query?: string
+  brands?: string[]
+  height?: { min: number; max: number } | null
+}
+
+export function filterPosts(posts: OutfitPost[], filter: PostFilter): OutfitPost[] {
+  const term = filter.query?.trim().toLowerCase()
+  return posts.filter((post) => {
+    if (filter.category && post.category !== filter.category) return false
+
+    if (term) {
+      const haystack = [
+        post.title,
+        post.description,
+        post.author.name,
+        ...post.items.map((i) => `${i.brand} ${i.name}`),
+      ]
+        .join(' ')
+        .toLowerCase()
+      if (!haystack.includes(term)) return false
+    }
+
+    if (filter.height) {
+      const h = post.author.heightCm
+      if (h < filter.height.min || h >= filter.height.max) return false
+    }
+
+    if (filter.brands?.length) {
+      const brands = post.items.map((i) => i.brand)
+      if (!filter.brands.some((b) => brands.includes(b))) return false
+    }
+
+    return true
+  })
 }
 
 export const posts: OutfitPost[] = [

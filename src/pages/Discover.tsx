@@ -1,5 +1,5 @@
-import { Bookmark, Heart, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Bookmark, CloudOff, Heart, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Chip from '../components/Chip'
 import StatusBar from '../components/StatusBar'
@@ -8,7 +8,9 @@ import DiscoverFilterSheet, {
   emptyFilters,
   type DiscoverFilters,
 } from '../components/DiscoverFilterSheet'
+import { useAuth } from '../context/AuthContext'
 import { usePosts } from '../context/PostsContext'
+import { useDiscoverPosts } from '../hooks/useDiscoverPosts'
 import {
   authorAvatar,
   formatPostedAt,
@@ -17,49 +19,28 @@ import {
   type OutfitCategory,
   type OutfitPost,
 } from '../data/posts'
+import { useI18n } from '../i18n'
 
 export default function Discover() {
-  const { posts, isLiked, toggleLike, likeCount, isSaved, toggleSave } = usePosts()
+  const { t } = useI18n()
+  const { status, refresh } = useAuth()
+  const { isLiked, toggleLike, likeCount, isSaved, toggleSave } = usePosts()
   const [category, setCategory] = useState<OutfitCategory | null>(null)
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<DiscoverFilters>(emptyFilters)
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const visible = useMemo(() => {
-    const matched = posts.filter((post) => {
-      if (category && post.category !== category) return false
-
-      if (query) {
-        const haystack = [
-          post.title,
-          post.description,
-          post.author.name,
-          ...post.items.map((i) => `${i.brand} ${i.name}`),
-        ]
-          .join(' ')
-          .toLowerCase()
-        if (!haystack.includes(query.toLowerCase())) return false
-      }
-
-      if (filters.height) {
-        const h = post.author.heightCm
-        if (h < filters.height.min || h >= filters.height.max) return false
-      }
-
-      if (filters.brands.length > 0) {
-        const brands = post.items.map((i) => i.brand)
-        if (!filters.brands.some((b) => brands.includes(b))) return false
-      }
-
-      return true
-    })
-
-    return matched.sort((a, b) =>
-      filters.sort === 'popular'
-        ? likeCount(b) - likeCount(a)
-        : new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
-    )
-  }, [posts, category, query, filters, likeCount])
+  const {
+    posts: visible,
+    loading,
+    error,
+  } = useDiscoverPosts({
+    category,
+    query,
+    brands: filters.brands,
+    height: filters.height,
+    sort: filters.sort,
+  })
 
   const filterCount = activeFilterCount(filters)
 
@@ -70,6 +51,17 @@ export default function Discover() {
       <header className="flex items-center justify-between px-5 pb-3 pt-2">
         <h1 className="font-display text-xl font-medium text-ink-900">디스커버</h1>
         <div className="flex items-center gap-2">
+          {status === 'offline' && (
+            <button
+              type="button"
+              onClick={refresh}
+              title={t('auth.offline.note')}
+              className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
+            >
+              <CloudOff size={13} />
+              {t('auth.offline.badge')}
+            </button>
+          )}
           <Link
             to="/saved"
             aria-label="보관함"
@@ -86,6 +78,12 @@ export default function Discover() {
           </Link>
         </div>
       </header>
+
+      {error && (
+        <p role="alert" className="mx-5 mb-3 rounded-xl bg-clay-100 px-3 py-2 text-xs text-clay-600">
+          {error}
+        </p>
+      )}
 
       <div className="flex items-center gap-2 px-5">
         <div className="flex flex-1 items-center gap-2 rounded-full bg-moss-100 px-4 py-3 text-sm">
@@ -141,7 +139,9 @@ export default function Discover() {
       </div>
 
       {visible.length === 0 && (
-        <p className="py-14 text-center text-sm text-moss-500">조건에 맞는 코디가 없어요.</p>
+        <p className="py-14 text-center text-sm text-moss-500">
+          {loading ? '불러오는 중…' : '조건에 맞는 코디가 없어요.'}
+        </p>
       )}
 
       <DiscoverFilterSheet
