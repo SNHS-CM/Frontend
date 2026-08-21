@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { heightRanges, postBrands, type HeightRange } from '../data/posts'
+import { useDiscoverFilters } from '../hooks/useDiscoverFilters'
+import { type HeightRange } from '../data/posts'
 
 export type SortKey = 'recent' | 'popular'
 
@@ -28,6 +29,8 @@ export default function DiscoverFilterSheet({
   onApply: (next: DiscoverFilters) => void
 }) {
   const [draft, setDraft] = useState<DiscoverFilters>(value)
+  // Brands come from the posts that actually exist, so the server owns the list.
+  const { brands: postBrands, heightRanges } = useDiscoverFilters()
 
   // Re-sync whenever the sheet is reopened, so a cancelled edit is discarded.
   useEffect(() => {
@@ -103,16 +106,20 @@ export default function DiscoverFilterSheet({
         </Section>
 
         <Section title="브랜드">
-          <div className="flex flex-wrap gap-2">
-            {postBrands.map((brand) => (
-              <Pill
-                key={brand}
-                label={brand}
-                active={draft.brands.includes(brand)}
-                onClick={() => toggleBrand(brand)}
-              />
-            ))}
-          </div>
+          {postBrands.length === 0 ? (
+            <p className="text-xs text-moss-400">아직 올라온 브랜드가 없어요.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {postBrands.map((brand) => (
+                <Pill
+                  key={brand}
+                  label={brand}
+                  active={draft.brands.includes(brand)}
+                  onClick={() => toggleBrand(brand)}
+                />
+              ))}
+            </div>
+          )}
         </Section>
 
         <div className="mt-6 flex gap-2">

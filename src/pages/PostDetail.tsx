@@ -1,5 +1,5 @@
 import { ArrowLeft, Bookmark, Heart, MessageCircle, Share2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useChat } from '../context/ChatContext'
 import { usePosts } from '../context/PostsContext'
@@ -13,12 +13,44 @@ import {
 export default function PostDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { getPost, isLiked, toggleLike, likeCount, isSaved, toggleSave, saveCount } = usePosts()
+  const {
+    posts,
+    fetchPost,
+    isLiked,
+    toggleLike,
+    likeCount,
+    isSaved,
+    toggleSave,
+    saveCount,
+    share,
+  } = usePosts()
   const { startOrOpenPostChat } = useChat()
   const [toast, setToast] = useState('')
+  const [notFound, setNotFound] = useState(false)
 
-  const post = getPost(id ?? '')
-  if (!post) return <Navigate to="/discover" replace />
+  // Reading from the array keeps the page live when the feed reloads.
+  const post = posts.find((p) => p.id === id)
+
+  // A link or a reload can land on a post the feed has not loaded yet.
+  useEffect(() => {
+    if (post || !id) return
+    let cancelled = false
+    void fetchPost(id).then((found) => {
+      if (!cancelled && !found) setNotFound(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [id, post, fetchPost])
+
+  if (notFound || !id) return <Navigate to="/discover" replace />
+  if (!post) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-moss-500">
+        불러오는 중…
+      </div>
+    )
+  }
 
   const liked = isLiked(post.id)
   const saved = isSaved(post.id)
@@ -33,12 +65,15 @@ export default function PostDetail() {
     try {
       if (navigator.share) {
         await navigator.share({ title: post.title, text: post.description, url })
+        share(post.id)
         return
       }
       await navigator.clipboard.writeText(url)
+      share(post.id)
       showToast('링크를 복사했어요')
     } catch {
-      // User dismissed the share sheet, or the clipboard was blocked — nothing to recover.
+      // User dismissed the share sheet, or the clipboard was blocked — nothing
+      // left the app, so there is nothing to count.
       showToast('공유하지 못했어요')
     }
   }

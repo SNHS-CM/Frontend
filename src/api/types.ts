@@ -309,3 +309,69 @@ export interface ApiHomeFeed {
   seasonPicks: ApiProduct[]
   newArrivals: ApiProduct[]
 }
+
+// --- 디스커버 ----------------------------------------------------------------
+
+export type ApiOutfitCategory = '데일리' | '오피스' | '캐주얼' | '스트릿' | '미니멀' | '빈티지'
+export type ApiPostItemRole = '아우터' | '상의' | '하의' | '신발' | '액세서리'
+export type ApiPostSort = 'recent' | 'popular'
+
+/** 코디에 쓰인 옷 한 벌 — 옷 정보와 브랜드. */
+export interface ApiPostItem {
+  role: ApiPostItemRole
+  brand: string
+  name: string
+  size: string
+}
+
+/** 올린 사람 + 체형 수치. 글에 복사된 값이라 작성자가 프로필을 고쳐도 그대로다. */
+export interface ApiPostAuthor {
+  id: string
+  name: string
+  avatarSeed: string
+  heightCm: number
+  weightKg: number
+  usualTopSize: string
+  usualBottomSize: string
+}
+
+/** 디스커버 코디 글. 백엔드 PostOut 과 1:1. */
+export interface ApiPost {
+  id: string
+  title: string
+  description: string
+  category: ApiOutfitCategory
+  author: ApiPostAuthor
+  postedAt: string
+  /** 사진이 없을 때 쓰는 플레이스홀더 시드 */
+  seed: string
+  imageUrl: string
+  items: ApiPostItem[]
+  likes: number
+  saves: number
+  shares: number
+  /** 보는 사람 기준 — 같은 글도 사람마다 다르다 */
+  liked: boolean
+  saved: boolean
+  mine: boolean
+}
+
+export interface ApiHeightRange {
+  label: string
+  min: number
+  max: number
+}
+
+export interface ApiSortOption {
+  value: ApiPostSort
+  label: string
+}
+
+/** 필터 시트가 그릴 선택지. 브랜드는 올라온 글에서 뽑은 것이라 서버가 준다. */
+export interface ApiDiscoverFilters {
+  categories: ApiOutfitCategory[]
+  brands: string[]
+  heightRanges: ApiHeightRange[]
+  sorts: ApiSortOption[]
+  roles: ApiPostItemRole[]
+}

@@ -19,15 +19,17 @@ createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ProfileProvider>
             <ListingsProvider>
-              <PostsProvider>
-                <CartProvider>
-                  <WishlistProvider>
+              {/* 코디의 좋아요·저장 표시는 WishlistProvider 가 들고 있으므로
+                  PostsProvider 가 그 안쪽에 있어야 한다. */}
+              <WishlistProvider>
+                <PostsProvider>
+                  <CartProvider>
                     <ChatProvider>
                       <App />
                     </ChatProvider>
-                  </WishlistProvider>
-                </CartProvider>
-              </PostsProvider>
+                  </CartProvider>
+                </PostsProvider>
+              </WishlistProvider>
             </ListingsProvider>
           </ProfileProvider>
         </AuthProvider>
