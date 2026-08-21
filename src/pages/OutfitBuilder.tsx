@@ -1,6 +1,10 @@
-import { Bookmark, CloudOff, Leaf, Sparkles } from 'lucide-react'
+import { Bookmark, Camera, CloudOff, Leaf, Sparkles } from 'lucide-react'
+import { useRef, useState } from 'react'
+import AiStylistPanel, { type OutfitSelection } from '../components/AiStylistPanel'
+import GarmentPhotoSheet from '../components/GarmentPhotoSheet'
 import StatusBar from '../components/StatusBar'
 import { useAuth } from '../context/AuthContext'
+import { useAiStatus } from '../hooks/useAiStatus'
 import { useOutfitBuilder, type BuilderGarment } from '../hooks/useOutfitBuilder'
 import { useI18n } from '../i18n'
 
@@ -122,7 +126,20 @@ export default function OutfitBuilder() {
     isBookmarked,
     save,
     toggleBookmark,
+    reload,
   } = useOutfitBuilder()
+
+  const aiEnabled = useAiStatus()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [photo, setPhoto] = useState<File | null>(null)
+
+  /** AI 가 고른 조합을 그대로 반영한다. */
+  const applySelection = ({ topId, bottomId, shoesId }: OutfitSelection) => {
+    selectTop(topId)
+    selectBottom(bottomId)
+    // 신발은 토글이라 이미 같은 것이 골라져 있으면 다시 누르면 안 된다.
+    if (shoesId && shoesId !== shoe?.id) selectShoes(shoesId)
+  }
 
   if (loading) {
     return (
@@ -144,6 +161,16 @@ export default function OutfitBuilder() {
           <h1 className="flex-1 font-display text-2xl font-medium text-ink-900">
             {t('outfit.title')}
           </h1>
+          {aiEnabled && (
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              className="flex items-center gap-1.5 rounded-full bg-moss-700 px-3 py-1.5 text-[11px] font-medium text-cream active:bg-moss-800"
+            >
+              <Camera size={13} />
+              {t('ai.garment.add')}
+            </button>
+          )}
           {status === 'offline' && (
             <button
               type="button"
@@ -219,6 +246,16 @@ export default function OutfitBuilder() {
         </div>
       )}
 
+      {aiEnabled && (
+        <AiStylistPanel
+          top={top}
+          bottom={bottom}
+          shoe={shoe}
+          garments={[...tops, ...bottoms, ...shoes]}
+          onApply={applySelection}
+        />
+      )}
+
       <Rack
         title={t('outfit.tops')}
         garments={tops}
@@ -249,6 +286,31 @@ export default function OutfitBuilder() {
           {saving ? t('outfit.saving') : isBookmarked ? t('outfit.saved') : t('outfit.save')}
         </button>
       </div>
+
+      {/* 카메라를 바로 여는 입력. 값을 비워 두어야 같은 사진을 다시 고를 수 있다. */}
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (file) setPhoto(file)
+        }}
+      />
+
+      {photo && (
+        <GarmentPhotoSheet
+          file={photo}
+          onClose={() => setPhoto(null)}
+          onCreated={() => {
+            setPhoto(null)
+            void reload()
+          }}
+        />
+      )}
     </div>
   )
 }

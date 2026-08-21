@@ -375,3 +375,77 @@ export interface ApiDiscoverFilters {
   sorts: ApiSortOption[]
   roles: ApiPostItemRole[]
 }
+
+// --- AI ---------------------------------------------------------------------
+
+/** `GET /api/ai/status` — 키가 없으면 enabled=false 라 AI 버튼을 숨긴다. */
+export interface ApiAiStatus {
+  enabled: boolean
+  model: string
+}
+
+/** 사진에서 뽑은 옷 등록 초안. 그대로 `POST /api/garments` 에 넣을 수 있다. */
+export interface ApiGarmentDraft {
+  type: GarmentType
+  name: string
+  color: string
+  colorHex: string
+  material: string
+  style: string
+  fit: string
+  emoji: string
+  matchScore: number
+  co2SavedKg: number
+  imageUrl: string
+}
+
+export interface ApiGarmentAnalysis {
+  isGarment: boolean
+  imageUrl: string
+  draft: ApiGarmentDraft | null
+  /** 매치 힌트, 또는 인식 실패 이유 */
+  note: string
+}
+
+export interface ApiSuggestedOutfit {
+  topId: string
+  bottomId: string
+  shoesId: string | null
+  title: string
+  reason: string
+  matchScore: number
+}
+
+/** 옷장 안에서 찾은 대안. 새로 사라는 제안이 아니다. */
+export interface ApiOutfitSwap {
+  slot: 'top' | 'bottom' | 'shoes'
+  garmentId: string
+  garmentName: string
+  reason: string
+  expectedScore: number
+}
+
+export interface ApiOutfitReview {
+  matchScore: number
+  verdict: string
+  comment: string
+  tips: string[]
+  swap: ApiOutfitSwap | null
+}
+
+export interface ApiSubstituteLook {
+  garmentIds: string[]
+  garmentNames: string[]
+  title: string
+  reason: string
+}
+
+/** '사지 말고 입기' — canSubstitute 가 false 면 솔직하게 못 한다고 답한 것이다. */
+export interface ApiWearInstead {
+  canSubstitute: boolean
+  similarity: number
+  look: ApiSubstituteLook | null
+  co2AvoidedKg: number
+  ecoPoints: number
+  message: string
+}

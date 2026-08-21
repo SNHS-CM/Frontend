@@ -5,6 +5,8 @@ import { useCart } from '../context/CartContext'
 import { useChat } from '../context/ChatContext'
 import { useWishlist } from '../context/WishlistContext'
 import { formatKRW, productImage, resolveProductImage, products } from '../data/products'
+import WearInsteadCard from '../components/WearInsteadCard'
+import { useAiStatus } from '../hooks/useAiStatus'
 
 const sizes = ['XS', 'S', 'M', 'L', 'XL']
 
@@ -16,6 +18,7 @@ export default function ProductDetail() {
   const { startOrOpenProductChat } = useChat()
   const [size, setSize] = useState('M')
   const [justAdded, setJustAdded] = useState(false)
+  const aiEnabled = useAiStatus()
 
   const product = products.find((p) => p.id === id)
   if (!product) return <Navigate to="/home" replace />
@@ -133,6 +136,8 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+
+        {aiEnabled && <WearInsteadCard productId={product.id} />}
 
         <div>
           <p className="mb-2 text-sm font-medium text-ink-900">사이즈</p>
