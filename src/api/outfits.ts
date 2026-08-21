@@ -24,6 +24,8 @@ export interface GarmentInput {
   emoji?: string
   matchScore?: number
   co2SavedKg?: number
+  /** 이미 업로드된 사진 경로 (AI 초안이 함께 준다) */
+  imageUrl?: string
 }
 
 export const createGarment = (input: GarmentInput) =>
