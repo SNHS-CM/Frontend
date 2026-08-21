@@ -1,12 +1,12 @@
-import { Bookmark, Camera, CloudOff, Leaf, Sparkles } from 'lucide-react'
+import { Bookmark, Camera, Leaf, Sparkles } from 'lucide-react'
 import { useRef, useState } from 'react'
 import AiStylistPanel, { type OutfitSelection } from '../components/AiStylistPanel'
 import GarmentPhotoSheet from '../components/GarmentPhotoSheet'
 import StatusBar from '../components/StatusBar'
-import { useAuth } from '../context/AuthContext'
 import { useAiStatus } from '../hooks/useAiStatus'
 import { useOutfitBuilder, type BuilderGarment } from '../hooks/useOutfitBuilder'
 import { useI18n } from '../i18n'
+import ConnectionBadge from '../components/ConnectionBadge'
 
 /** 옷이 살짝 떠 있는 듯한 은은한 그림자 (blur 14 · y+6 · opacity 0.16) */
 const FLOAT_SHADOW = 'drop-shadow-[0_6px_14px_rgba(35,32,25,0.16)]'
@@ -106,7 +106,6 @@ function Rack({
 
 export default function OutfitBuilder() {
   const { t } = useI18n()
-  const { status, refresh } = useAuth()
   const {
     loading,
     saving,
@@ -171,17 +170,7 @@ export default function OutfitBuilder() {
               {t('ai.garment.add')}
             </button>
           )}
-          {status === 'offline' && (
-            <button
-              type="button"
-              onClick={refresh}
-              title={t('auth.offline.note')}
-              className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
-            >
-              <CloudOff size={13} />
-              {t('auth.offline.badge')}
-            </button>
-          )}
+          <ConnectionBadge />
         </div>
         <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-moss-600">
           <Sparkles size={16} />

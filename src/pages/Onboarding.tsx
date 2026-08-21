@@ -28,7 +28,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(0)
   const navigate = useNavigate()
   const { t } = useI18n()
-  const { status, signedIn, browseOffline } = useAuth()
+  const { status, signedIn, demo, browseOffline } = useAuth()
 
   const isLast = step === slides.length - 1
   const slide = slides[step]
@@ -106,11 +106,13 @@ export default function Onboarding() {
                 browseOffline()
                 navigate('/home', { replace: true })
               }}
-              title={t('auth.offline.note')}
+              title={t(demo ? 'demo.note' : 'auth.offline.note')}
               className="!mt-4 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-sand-50/25 px-3 py-1.5 text-[11px] font-medium text-sand-100/80"
             >
               <CloudOff size={13} />
-              {t('auth.offline.badge')} · {t('auth.offline.browse')}
+              {demo
+                ? t('demo.browse')
+                : `${t('auth.offline.badge')} · ${t('auth.offline.browse')}`}
             </button>
           )}
         </div>

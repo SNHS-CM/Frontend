@@ -3,7 +3,6 @@ import {
   Bookmark,
   Check,
   ChevronRight,
-  CloudOff,
   Globe,
   HelpCircle,
   Info,
@@ -28,6 +27,7 @@ import LanguageSettings from './profile/LanguageSettings'
 import NotificationsSettings from './profile/NotificationsSettings'
 import PrivacyData from './profile/PrivacyData'
 import StyleSurvey from './profile/StyleSurvey'
+import ConnectionBadge from '../components/ConnectionBadge'
 
 type Panel =
   | 'survey'
@@ -42,7 +42,7 @@ type Panel =
 export default function Profile() {
   const { t } = useI18n()
   const { profile, updateProfile, uploadPhoto, syncError } = useProfile()
-  const { status, logout, refresh } = useAuth()
+  const { status, logout } = useAuth()
   const [panel, setPanel] = useState<Panel>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState(profile.name)
@@ -97,17 +97,7 @@ export default function Profile() {
         <h1 className="flex-1 font-display text-2xl font-medium text-ink-900">
           {t('profile.title')}
         </h1>
-        {status === 'offline' && (
-          <button
-            type="button"
-            onClick={refresh}
-            title={t('auth.offline.note')}
-            className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
-          >
-            <CloudOff size={13} />
-            {t('auth.offline.badge')}
-          </button>
-        )}
+        <ConnectionBadge />
       </header>
 
       {syncError && (

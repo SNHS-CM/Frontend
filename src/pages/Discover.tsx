@@ -1,4 +1,4 @@
-import { Bookmark, CloudOff, Heart, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
+import { Bookmark, Heart, MessageCircle, Search, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Chip from '../components/Chip'
@@ -8,7 +8,6 @@ import DiscoverFilterSheet, {
   emptyFilters,
   type DiscoverFilters,
 } from '../components/DiscoverFilterSheet'
-import { useAuth } from '../context/AuthContext'
 import { usePosts } from '../context/PostsContext'
 import { useDiscoverPosts } from '../hooks/useDiscoverPosts'
 import {
@@ -20,11 +19,9 @@ import {
   type OutfitCategory,
   type OutfitPost,
 } from '../data/posts'
-import { useI18n } from '../i18n'
+import ConnectionBadge from '../components/ConnectionBadge'
 
 export default function Discover() {
-  const { t } = useI18n()
-  const { status, refresh } = useAuth()
   const { isLiked, toggleLike, likeCount, isSaved, toggleSave } = usePosts()
   const [category, setCategory] = useState<OutfitCategory | null>(null)
   const [query, setQuery] = useState('')
@@ -52,17 +49,7 @@ export default function Discover() {
       <header className="flex items-center justify-between px-5 pb-3 pt-2">
         <h1 className="font-display text-xl font-medium text-ink-900">디스커버</h1>
         <div className="flex items-center gap-2">
-          {status === 'offline' && (
-            <button
-              type="button"
-              onClick={refresh}
-              title={t('auth.offline.note')}
-              className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
-            >
-              <CloudOff size={13} />
-              {t('auth.offline.badge')}
-            </button>
-          )}
+          <ConnectionBadge />
           <Link
             to="/saved"
             aria-label="보관함"

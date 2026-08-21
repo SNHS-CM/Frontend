@@ -8,7 +8,7 @@ import { useI18n } from '../i18n'
 
 export default function Login() {
   const { t } = useI18n()
-  const { login, status } = useAuth()
+  const { login, status, demo } = useAuth()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -62,8 +62,8 @@ export default function Login() {
           <div className="mt-6 flex items-start gap-2 rounded-2xl bg-clay-100 px-4 py-3 text-clay-600">
             <CloudOff size={15} className="mt-0.5 shrink-0" />
             <div className="text-xs leading-relaxed">
-              <p>{t('auth.local.notice')}</p>
-              <p className="mt-1 font-medium">{t('auth.local.devHint')}</p>
+              <p>{t(demo ? 'demo.notice' : 'auth.local.notice')}</p>
+              <p className="mt-1 font-medium">{t(demo ? 'demo.hint' : 'auth.local.devHint')}</p>
             </div>
           </div>
         )}

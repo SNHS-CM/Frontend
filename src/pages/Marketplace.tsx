@@ -1,20 +1,19 @@
-import { CloudOff, Heart, Leaf, MapPin, MessageCircle, Plus, Search } from 'lucide-react'
+import { Heart, Leaf, MapPin, MessageCircle, Plus, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import StatusBar from '../components/StatusBar'
-import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
 import { useListings } from '../context/ListingsContext'
 import { useMarketListings } from '../hooks/useMarketListings'
 import { resolveListingImage, type Listing } from '../data/listings'
 import { formatKRW } from '../data/products'
 import { useI18n } from '../i18n'
+import ConnectionBadge from '../components/ConnectionBadge'
 
 type Tab = 'near' | 'mine'
 
 export default function Marketplace() {
   const { t } = useI18n()
-  const { status, refresh } = useAuth()
   const { syncError } = useListings()
   const [tab, setTab] = useState<Tab>('near')
   const [query, setQuery] = useState('')
@@ -32,17 +31,7 @@ export default function Marketplace() {
       <header className="flex items-center justify-between px-5 pb-3 pt-2">
         <h1 className="font-display text-xl font-medium text-ink-900">마켓</h1>
         <div className="flex items-center gap-2">
-          {status === 'offline' && (
-            <button
-              type="button"
-              onClick={refresh}
-              title={t('auth.offline.note')}
-              className="flex items-center gap-1.5 rounded-full bg-clay-100 px-3 py-1.5 text-[11px] font-medium text-clay-600"
-            >
-              <CloudOff size={13} />
-              {t('auth.offline.badge')}
-            </button>
-          )}
+          <ConnectionBadge />
           <Link
             to="/chat"
             aria-label="채팅 목록"

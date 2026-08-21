@@ -6,9 +6,19 @@
  *  back to local mode instead of showing an error.
  */
 
+// 값을 **비워 두면** 백엔드 없이 도는 데모 모드다 (`VITE_API_BASE=`).
+// 변수를 아예 두지 않으면 로컬 개발 기본값을 쓴다. `??` 는 undefined 만 걸러내므로
+// 빈 문자열은 그대로 남고, 그게 데모 모드 신호가 된다.
 const RAW_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 
 export const API_BASE = RAW_BASE.replace(/\/+$/, '')
+
+/** 백엔드가 설정돼 있는지. false 면 요청을 아예 만들지 않는다.
+ *
+ *  빈 주소로 두면 모든 요청이 프론트와 같은 출처로 나가서, 정적 호스팅이 404 를
+ *  돌려주고 "요청에 실패했습니다 (404)" 만 뜬다. 그럴 바에는 처음부터 나가지 않는
+ *  편이 낫다 — 실패한 요청도, 콘솔 오류도, 기다림도 없다. */
+export const HAS_BACKEND = API_BASE !== ''
 
 const TOKEN_KEY = 'codimoment.token'
 
@@ -134,6 +144,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     payload = JSON.stringify(body)
   }
 
+  // 데모 모드 — 요청을 만들지 않는다. 호출하는 쪽은 서버가 꺼져 있을 때와 똑같이
+  // 처리하므로, 화면은 전부 로컬 데이터로 그려진다.
+  if (!HAS_BACKEND) throw new ApiError(0, '데모 모드예요. 변경사항은 이 기기에만 저장돼요.')
+
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, { method, headers, body: payload, signal })
@@ -168,6 +182,7 @@ export const api = {
 
 /** Cheap reachability probe used to tell "logged out" apart from "server down". */
 export async function ping(): Promise<boolean> {
+  if (!HAS_BACKEND) return false
   try {
     await request('/health', { auth: false })
     return true

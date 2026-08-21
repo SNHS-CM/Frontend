@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { ApiError, ping, setToken } from '../api/client'
+import { ApiError, HAS_BACKEND, ping, setToken } from '../api/client'
 import {
   DEV_ACCOUNT,
   canStoreLocalAccounts,
@@ -39,6 +39,8 @@ interface AuthContextValue {
   localIdentity: LocalIdentity | null
   /** True for a real session *or* an offline one — what the router gates on. */
   signedIn: boolean
+  /** 백엔드 없이 도는 데모 빌드인지. 서버 장애와 구분해 문구를 바꾼다. */
+  demo: boolean
   online: boolean
   login: (email: string, password: string) => Promise<void>
   signup: (input: SignupPayload) => Promise<void>
@@ -174,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initialProfile,
       localIdentity,
       signedIn: status === 'authenticated' || localIdentity !== null,
+      demo: !HAS_BACKEND,
       online: status === 'authenticated',
       login,
       signup,
